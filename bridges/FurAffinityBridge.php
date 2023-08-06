@@ -2,11 +2,11 @@
 
 class FurAffinityBridge extends BridgeAbstract
 {
-    const NAME = 'FurAffinity Bridge';
+    const NAME = 'EDITED - FurAffinity Bridge';
     const URI = 'https://www.furaffinity.net';
     const CACHE_TIMEOUT = 300; // 5min
-    const DESCRIPTION = 'Returns posts from various sections of FurAffinity';
-    const MAINTAINER = 'Roliga';
+    const DESCRIPTION = 'Returns posts from various sections of FurAffinity. See configuration for authentication.';
+    const MAINTAINER = 'Roliga, mruac';
     const PARAMETERS = [
         'Search' => [
             'q' => [
@@ -593,8 +593,11 @@ class FurAffinityBridge extends BridgeAbstract
     /*
      * This was aquired by creating a new user on FA then
      * extracting the cookie from the browsers dev console.
+     * 
+     * Alternatively, set values of "a" and "b" cookies as "aCookie" and "bCookie"
+     * respectively, in config.ini.php's Bridge specific configurations.
      */
-    const FA_AUTH_COOKIE = 'b=4ce65691-b50f-4742-a990-bf28d6de16ee; a=ca6e4566-9d81-4263-9444-653b142e35f8';
+    private $FA_AUTH_COOKIE = 'b=4ce65691-b50f-4742-a990-bf28d6de16ee; a=ca6e4566-9d81-4263-9444-653b142e35f8';
 
     public function detectParameters($url)
     {
@@ -737,6 +740,10 @@ class FurAffinityBridge extends BridgeAbstract
 
     public function collectData()
     {
+        if (!is_null($this->getOption('bCookie')) && !is_null($this->getOption('aCookie'))) {
+            $this->FA_AUTH_COOKIE = 'b=' . $this->getOption('bCookie') . '; a=' . $this->getOption('aCookie');
+        }
+
         switch ($this->queriedContext) {
             case 'Search':
                 $data = [
@@ -802,7 +809,7 @@ class FurAffinityBridge extends BridgeAbstract
         $header = [
                 'Host: ' . parse_url(self::URI, PHP_URL_HOST),
                 'Content-Type: application/x-www-form-urlencoded',
-                'Cookie: ' . self::FA_AUTH_COOKIE
+                'Cookie: ' . $this->FA_AUTH_COOKIE
             ];
 
         $html = getSimpleHTMLDOM($this->getURI(), $header, $opts);
@@ -814,8 +821,8 @@ class FurAffinityBridge extends BridgeAbstract
     private function getFASimpleHTMLDOM($url, $cache = false)
     {
         $header = [
-                'Cookie: ' . self::FA_AUTH_COOKIE
-            ];
+            'Cookie: ' . $this->FA_AUTH_COOKIE
+        ];
 
         if ($cache) {
             $html = getSimpleHTMLDOMCached($url, 86400, $header); // 24 hours
