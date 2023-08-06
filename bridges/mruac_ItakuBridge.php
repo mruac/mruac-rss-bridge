@@ -11,37 +11,35 @@ class mruac_ItakuBridge extends BridgeAbstract
     const PARAMETERS = [
         'Image Search' => [
             'text' => [
-                'name' => 'Text to search:',
+                'name' => 'Text to search',
                 'title' => 'Search includes title, description and tags.',
                 'type' => 'text',
-                'required' => true,
                 'defaultValue' => '',
                 'exampleValue' => 'Text (incl. tags)'
             ],
             'tags' => [
-                'name' => 'Tags to search:',
+                'name' => 'Tags to search',
                 'title' => 'Space seperated tags to include in search. Prepend with "-" to exclude, "~" for optional.',
                 'type' => 'text',
-                'required' => true,
                 'defaultValue' => '',
                 'exampleValue' => 'tag1 -tag2 ~tag3'
             ],
             'order' => [
-                'name' => 'Sort by:',
+                'name' => 'Sort by',
                 'type' => 'list',
-                'value' => [
+                'values' => [
                     'Trending' => '-hotness_score',
-                    'Newest' => 'date_added',
-                    'Oldest' => '-date_added',
-                    'Top' => 'num_likes',
-                    'Bottom' => '-num_likes'
+                    'Newest' => '-date_added',
+                    'Oldest' => 'date_added',
+                    'Top' => '-num_likes',
+                    'Bottom' => 'num_likes'
                 ],
-                'defaultValue' => 'date_added'
+                'defaultValue' => '-date_added'
             ],
             'range' => [
-                'name' => 'Date range:',
+                'name' => 'Date range',
                 'type' => 'list',
-                'value' => [
+                'values' => [
                     'Today' => 'today',
                     'Yesterday' => 'yesterday',
                     'Past 3 days' => '3_days',
@@ -57,44 +55,43 @@ class mruac_ItakuBridge extends BridgeAbstract
                 'type' => 'checkbox'
             ],
             'rating_s' => [
-                'name' => 'Maturity: SFW',
+                'name' => 'Include SFW',
                 'type' => 'checkbox'
             ],
             'rating_q' => [
-                'name' => 'Maturity: Questionable',
+                'name' => 'Include Questionable',
                 'type' => 'checkbox'
             ],
             'rating_e' => [
-                'name' => 'Maturity: NSFW',
+                'name' => 'Include NSFW',
                 'type' => 'checkbox'
             ]
 
         ],
         'Post Search' => [
             'tags' => [
-                'name' => 'Tags to search:',
+                'name' => 'Tags to search',
                 'title' => 'Space seperated tags to include in search. Prepend with "-" to exclude, "~" for optional.',
                 'type' => 'text',
-                'required' => true,
                 'defaultValue' => '',
                 'exampleValue' => 'tag1 -tag2 ~tag3'
             ],
             'order' => [
-                'name' => 'Sort by:',
+                'name' => 'Sort by',
                 'type' => 'list',
-                'value' => [
+                'values' => [
                     'Trending' => '-hotness_score',
-                    'Newest' => 'date_added',
-                    'Oldest' => '-date_added',
-                    'Top' => 'num_likes',
-                    'Bottom' => '-num_likes'
+                    'Newest' => '-date_added',
+                    'Oldest' => 'date_added',
+                    'Top' => '-num_likes',
+                    'Bottom' => 'num_likes'
                 ],
-                'defaultValue' => 'date_added'
+                'defaultValue' => '-date_added'
             ],
             'range' => [
-                'name' => 'Date range:',
+                'name' => 'Date range',
                 'type' => 'list',
-                'value' => [
+                'values' => [
                     'Today' => 'today',
                     'Yesterday' => 'yesterday',
                     'Past 3 days' => '3_days',
@@ -110,15 +107,15 @@ class mruac_ItakuBridge extends BridgeAbstract
                 'type' => 'checkbox'
             ],
             'rating_s' => [
-                'name' => 'Maturity: SFW',
+                'name' => 'Include SFW',
                 'type' => 'checkbox'
             ],
             'rating_q' => [
-                'name' => 'Maturity: Questionable',
+                'name' => 'Include Questionable',
                 'type' => 'checkbox'
             ],
             'rating_e' => [
-                'name' => 'Maturity: NSFW',
+                'name' => 'Include NSFW',
                 'type' => 'checkbox'
             ]
         ],
@@ -134,22 +131,64 @@ class mruac_ItakuBridge extends BridgeAbstract
                 'title' => 'User ID, if known.'
             ],
             'reshares' => [
-                'name' => 'Include reshares?',
+                'name' => 'Include reshares',
                 'type' => 'checkbox'
             ],
             'rating_s' => [
-                'name' => 'Include SFW?',
+                'name' => 'Include SFW',
                 'type' => 'checkbox'
             ],
             'rating_q' => [
-                'name' => 'Include Questionable?',
+                'name' => 'Include Questionable',
                 'type' => 'checkbox'
             ],
             'rating_e' => [
-                'name' => 'Include NSFW?',
+                'name' => 'Include NSFW',
+                'type' => 'checkbox'
+            ]
+        ],
+        'Home feed' => [
+            'order' => [
+                'name' => 'Sort by',
+                'type' => 'list',
+                'values' => [
+                    'Trending' => '-hotness_score',
+                    'Newest' => '-date_added'
+                ],
+                'defaultValue' => '-date_added'
+            ],
+            'range' => [
+                'name' => 'Date range',
+                'type' => 'list',
+                'values' => [
+                    'Today' => 'today',
+                    'Yesterday' => 'yesterday',
+                    'Past 3 days' => '3_days',
+                    'Past week' => 'week',
+                    'Past month' => '30_days',
+                    'Past year' => '365_days',
+                    'All time' => ''
+                ],
+                'defaultValue' => 'All time'
+            ],
+            'reshares' => [
+                'name' => 'Include reshares',
+                'type' => 'checkbox'
+            ],
+            'rating_s' => [
+                'name' => 'Include SFW',
+                'type' => 'checkbox'
+            ],
+            'rating_q' => [
+                'name' => 'Include Questionable',
+                'type' => 'checkbox'
+            ],
+            'rating_e' => [
+                'name' => 'Include NSFW',
                 'type' => 'checkbox'
             ]
         ]
+
     ];
 
     public function collectData()
@@ -234,19 +273,33 @@ class mruac_ItakuBridge extends BridgeAbstract
             }
         }
 
-        if ($this->queriedContext === 'User profile') {
+        if (
+            $this->queriedContext === 'User profile'
+            || $this->queriedContext === 'Home feed'
+        ) {
             $opt = [
                 'reshares' => $this->getInput('reshares'),
                 'rating_s' => $this->getInput('rating_s'),
                 'rating_q' => $this->getInput('rating_q'),
                 'rating_e' => $this->getInput('rating_e')
             ];
-            $user_id = $this->getInput('user_id') ?? $this->getOwnerID($this->getInput('user'));
 
-            $data = $this->getUserFeed(
-                $user_id,
-                $opt
-            );
+            if ($this->queriedContext === 'User profile') {
+                $opt['order'] = '-date_added';
+                $opt['range'] = '';
+                $user_id = $this->getInput('user_id') ?? $this->getOwnerID($this->getInput('user'));
+
+                $data = $this->getFeed(
+                    $opt,
+                    $user_id
+                );
+            }
+
+            if ($this->queriedContext === 'Home feed') {
+                $opt['order'] = $this->getInput('order');
+                $opt['range'] = $this->getInput('range');
+                $data = $this->getFeed($opt);
+            }
 
             foreach ($data['results'] as $record) {
                 switch ($record['content_type']) {
@@ -298,7 +351,7 @@ class mruac_ItakuBridge extends BridgeAbstract
 
     public function getURI()
     {
-        return self::URI . '/user/' . $this->getInput('searchUsername');
+        return self::URI;
     }
 
     private function getImagesSearch(array $opt)
@@ -366,9 +419,15 @@ class mruac_ItakuBridge extends BridgeAbstract
         return $this->getData($url, false, true);
     }
 
-    private function getUserFeed($ownerID, array $opt)
+    private function getFeed(array $opt, $ownerID = null)
     {
-        $url = self::URI . "/api/feed/?owner={$ownerID}&date_range=&page=1&page_size=30&format=json";
+        $url = self::URI . "/api/feed/?date_range={$opt['range']}&ordering={$opt['order']}&page=1&page_size=30&format=json";
+
+        if (is_null($ownerID)) {
+            $url .= "&visibility=PUBLIC&by_following=false";
+        } else {
+            $url .= "&owner={$ownerID}";
+        }
 
         if (!$opt['reshares']) {
             $url .= "&hide_reshares=true";
