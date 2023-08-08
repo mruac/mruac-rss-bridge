@@ -464,13 +464,26 @@ class mruac_ItakuBridge extends BridgeAbstract
         $content_str = nl2br($data['content']);
         $content = "<p>{$content_str}</p><br/>"; //TODO: Add link and itaku user mention detection and convert into links.
 
-        if (sizeof($data['tags']) > 0) {
-            $content .= "🏷 Tag(s): ";
+        if (array_key_exists('tags', $data) && sizeof($data['tags']) > 0) {
+            $tag_types = [
+                'ARTIST' => '',
+                'COPYRIGHT' => '',
+                'CHARACTER' => '',
+                'SPECIES' => '',
+                'GENERAL' => '',
+                'META' => ''
+            ];
             foreach ($data['tags'] as $tag) {
-                $url = self::URI . '/home/images?tags=' . $tag['name'];
-                $content .= "<a href=\"{$url}\">#{$tag['name']}</a> ";
+                $url = self::URI . '/tags/' . $tag['id'];
+                $str = "<a href=\"{$url}\">#{$tag['name']}</a> ";
+                $tag_types[$tag['tag_type']] .= $str;
             }
-            $content .= "<br/>";
+
+            foreach ($tag_types as $type => $str) {
+                if (strlen($str) > 0) {
+                    $content .= "🏷 <b>{$type}:</b> {$str}<br/>";
+                }
+            }
         }
 
         if (sizeof($data['folders']) > 0) {
@@ -524,12 +537,26 @@ class mruac_ItakuBridge extends BridgeAbstract
         $content = "<p>{$content_str}</p><br>"; //TODO: Add link and itaku user mention detection and convert into links.
 
         if (array_key_exists('tags', $data) && sizeof($data['tags']) > 0) {
-            $content .= "🏷 Tag(s): ";
+            // $content .= "🏷 Tag(s): ";
+            $tag_types = [
+                'ARTIST' => '',
+                'COPYRIGHT' => '',
+                'CHARACTER' => '',
+                'SPECIES' => '',
+                'GENERAL' => '',
+                'META' => ''
+            ];
             foreach ($data['tags'] as $tag) {
-                $url = self::URI . '/home/images?tags=' . $tag['name'];
-                $content .= "<a href=\"{$url}\">#{$tag['name']}</a> ";
+                $url = self::URI . '/tags/' . $tag['id'];
+                $str = "<a href=\"{$url}\">#{$tag['name']}</a> ";
+                $tag_types[$tag['tag_type']] .= $str;
             }
-            $content .= "<br/>";
+
+            foreach ($tag_types as $type => $str) {
+                if (strlen($str) > 0) {
+                    $content .= "🏷 <b>{$type}:</b> {$str}<br/>";
+                }
+            }
         }
 
         if (array_key_exists('reference_gallery_sections', $data) && sizeof($data['reference_gallery_sections']) > 0) {
@@ -592,14 +619,14 @@ class mruac_ItakuBridge extends BridgeAbstract
                 'META' => ''
             ];
             foreach ($data['tags'] as $tag) {
-                $url = self::URI . '/home/images?tags=' . $tag['name'];
+                $url = self::URI . '/tags/' . $tag['id'];
                 $str = "<a href=\"{$url}\">#{$tag['name']}</a> ";
                 $tag_types[$tag['tag_type']] .= $str;
             }
 
             foreach ($tag_types as $type => $str) {
                 if (strlen($str) > 0) {
-                    $content .= "🏷 {$type}: {$str}<br/>";
+                    $content .= "🏷 <b>{$type}:</b> {$str}<br/>";
                 }
             }
         }
