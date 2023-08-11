@@ -9,7 +9,7 @@ class mruac_ItakuUserBridge extends BridgeAbstract
     const DESCRIPTION = 'Bridges for Authenticated Itaku.ee User pages';
     const PARAMETERS = [
         'Home feed of your following' => [
-            'shares' => [
+            'reshares' => [
                 'name' => 'Include reshares',
                 'type' => 'checkbox',
             ],
