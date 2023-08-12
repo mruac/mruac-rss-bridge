@@ -113,7 +113,7 @@ class mruac_ItakuUserBridge extends BridgeAbstract
 
                 //incoming tag/maturity suggestions
                 if ($tags) {
-                    $data = $this->getData(self::URI . '/api/tag_suggestions/?&inbox=RECEIVED&unresolved=true&page_size=20&format=json', false, true);
+                    $data = $this->getData(self::URI . '/api/tag_suggestions/?&inbox=RECEIVED&unresolved=false&page_size=20&format=json', false, true);
                     foreach ($data['results'] as $record) {
                         $this->addItem($this->getTagSuggestions($record));
                     }
@@ -608,9 +608,9 @@ class mruac_ItakuUserBridge extends BridgeAbstract
 
     private function getTagSuggestions(array $record)
     {
-        $content = "For image: <b>{$record['image']['title']}</b><img src=\"{$record['image']['image_lg']}\"/>";
+        $content = "<p>For image: <b>{$record['image']['title']}</b></p><img src=\"{$record['image']['image_lg']}\"/><br/>";
         if (strlen($record['message']) > 0) {
-            $content .= '<b>Message from the suggester:</b><blockquote>' . nl2br($record['message']) . '</blockquote><hr/>';
+            $content .= '<p><b>Message from the suggester:</b><blockquote>' . nl2br($record['message']) . '</blockquote><hr/></p>';
         } else {
             $content .= '<p>No message provided from the suggester.</p>' . '<hr/><p>';
         }
