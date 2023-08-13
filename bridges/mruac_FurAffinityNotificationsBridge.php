@@ -555,16 +555,13 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
 
     private function isOldUI($html)
     {
-        if (is_null($html->find('.logout-link', 0))) {
-            returnServerError('Could not detect user. Check your cookies!');
-        }
-
         $isOldUI = $html->find('body', 0)->getAttribute('data-static-path') === '/themes/classic';
 
+        $current_user = null;
         if ($isOldUI) {
             $current_user = substr(trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00'), 1);
         } else {
-            $current_user = $html->find('.loggedin_user_avatar', 0)->getAttribute('alt');
+            $current_user = $html->find('.loggedin_user_avatar', 0)?->getAttribute('alt');
         }
         $this->saveCacheValue('username', $current_user);
 
@@ -638,20 +635,9 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
         }
     }
 
-    private function getUser()
-    {
-        $username = $this->loadCacheValue('username');
-        if (isset($username)) {
-            $html = $this->getFASimpleHTMLDOM(self::URI . 'msg/others/');
-            $this->isOldUI($html);
-            $username = $this->loadCacheValue('username');
-        }
-        return $username;
-    }
-
     public function getName()
     {
-        $username = $this->getUser();
+        $username = $this->loadCacheValue('username');
         if (isset($username)) {
             return self::NAME . ' for ' . $username;
         } else {
