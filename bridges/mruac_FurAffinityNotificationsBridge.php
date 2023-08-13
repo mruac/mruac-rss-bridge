@@ -192,7 +192,8 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
                         $this->addItem($this->parse_comment_notif($shout, $oldUI, $current_user));
                     }
                 } else {
-                    $current_user = $html->find('.loggedin_user_avatar', 0)?->getAttribute('alt');
+                    $current_user = $html->find('.loggedin_user_avatar', 0);
+                    $current_user = $current_user ? $current_user->getAttribute('alt') : null;
                     foreach ($html->find('#messages-comments-submission li') as $submission_comment) {
                         $this->addItem($this->parse_comment_notif($submission_comment, $oldUI));
                     }
@@ -329,11 +330,13 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
                 break;
             case 'comments-submissions[]':
                 $type = 'submission';
-                $url = $record->find('a', 1)?->getAttribute('href');
+                $url = $record->find('a', 1);
+                $url = $url ? $url->getAttribute('href') : null;
                 break;
             case 'comments-journals[]':
                 $type = 'journal';
-                $url = $record->find('a', 1)?->getAttribute('href');
+                $url = $record->find('a', 1);
+                $url = $url ? $url->getAttribute('href') : null;
                 break;
         }
 
@@ -561,7 +564,9 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
         if ($isOldUI) {
             $current_user = substr(trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00'), 1);
         } else {
-            $current_user = $html->find('.loggedin_user_avatar', 0)?->getAttribute('alt');
+            $current_user = $html->find('.loggedin_user_avatar', 0);
+            $current_user = $current_user ? $current_user->getAttribute('alt') : null;
+
         }
         $this->saveCacheValue('username', $current_user);
 
@@ -577,7 +582,10 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
 
     private function checkRequireMature($html)
     {
-        return str_contains($html->find('.section-body', 0)?->plaintext, 'To view this submission you must log in');
+        $system_message = $html->find('.section-body', 0);
+        $system_message = $system_message ? $system_message->plaintext : '';
+
+        return str_contains($system_message, 'To view this submission you must log in');
     }
 
     private function findParentComment($comment, $oldUI)
