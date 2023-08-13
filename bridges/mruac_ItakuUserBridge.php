@@ -80,6 +80,12 @@ class mruac_ItakuUserBridge extends BridgeAbstract
     {
         $this->token = $this->getOption('auth');
 
+        $user_profile = $this->loadCacheValue('userprofile');
+        if (!isset($user_profile)) {
+            $user_profile = $this->getData(self::URI . '/api/auth/user/?format=json', false, true);
+            $this->saveCacheValue('userprofile', $user_profile);
+        }
+
         if ($this->queriedContext === 'Notifications') {
 
             $messages = $this->getInput('messages');
@@ -706,7 +712,6 @@ class mruac_ItakuUserBridge extends BridgeAbstract
 
     private function getPost($id, array $metadata = null)
     {
-        //FIXME: Error if 404 due to either deleted or non-existent post. (Do same for images, comments and commissions.)
         $uri = self::URI . '/posts/' . $id;
         $url = self::URI . '/api/posts/' . $id . '/?format=json';
         try {
@@ -943,7 +948,6 @@ class mruac_ItakuUserBridge extends BridgeAbstract
     private function getData(string $url, bool $cache = false, bool $getJSON = false, array $httpHeaders = [], array $curlOptions = [])
     {
         $httpHeaders[] = 'Authorization: Token ' . $this->token;
-        // Debug::log($url);
         if ($getJSON) { //get JSON object
             if ($cache) {
                 $data = $this->loadCacheValue($url, 86400); // 24 hours
@@ -981,11 +985,21 @@ class mruac_ItakuUserBridge extends BridgeAbstract
 
     public function getName()
     {
-        return self::NAME;
+        $user_profile = $this->loadCacheValue('userprofile');
+        if (isset($user_profile)) {
+            return self::NAME . ' for ' . $user_profile['profile']['owner_username'];
+        } else {
+            return self::NAME;
+        }
     }
 
     public function getURI()
     {
-        return self::URI . '/user/' . $this->getInput('searchUsername');
+        $user_profile = $this->loadCacheValue('userprofile');
+        if (isset($username)) {
+            return self::URI . '/user/' . $user_profile['profile']['owner_username'];
+        } else {
+            return self::URI;
+        }
     }
 }
