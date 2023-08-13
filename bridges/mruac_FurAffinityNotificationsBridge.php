@@ -256,7 +256,7 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
         $html = $this->getFASimpleHTMLDOM($url, true)
             or returnServerError("Could not load {$url}. Check your cookies?");
 
-            if ($isOldUI) { //https://www.furaffinity.net/viewmessage/{$id}/
+        if ($isOldUI) { //https://www.furaffinity.net/viewmessage/{$id}/
             $id = $html->find('#pms-form [name^="items"]', 0)->getAttribute('value');
             $title = $html->find("#pms-form .maintable tr", 0)->find('font b', 0)->plaintext;
             $note = $html->find("#pms-form .maintable tr", 1);
@@ -313,7 +313,11 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
 
     private function parse_comment_notif($record, $oldUI, $current_user = null)
     {
-        if ($record->plaintext === 'Shout has been removed from your page.') {
+        if (
+            $record->plaintext === 'Shout has been removed from your page.'
+            || $record->plaintext === 'Comment or the Submission it was left on has been deleted.'
+            || $record->plaintext === 'Comment or the Journal it was left on has been deleted.'
+        ) {
             return null;
         }
 
@@ -374,7 +378,11 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
                 } elseif (str_contains($record->plaintext, 'replied to your comment on their')) { //on OP's post
                     $title = "{$who} replied to your comment on their {$type}: {$post_title}";
                 } else { //on your post
-                    $title = "{$who} replied to your comment on your {$type}: {$post_title}";
+                    if ($oldUI) {
+                        $title = "{$who} replied to your comment on your {$type}: {$post_title}";
+                    } else {
+                        $title = "{$who} replied to your comment on {$type}: {$post_title}";
+                    }
                 }
                 //include "in reply to here"
                 if (!$isDisabled && !$isDeleted) {
@@ -411,16 +419,6 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
             'timestamp' => $date,
             'content' => $content
         ];
-    }
-
-    public function getName()
-    {
-        return self::NAME;
-    }
-
-    public function getURI()
-    {
-        return self::URI;
     }
 
     private function parse_journals($record, $oldUI)
@@ -561,7 +559,16 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
             returnServerError('Could not detect user. Check your cookies!');
         }
 
-        return $html->find('body', 0)->getAttribute('data-static-path') === '/themes/classic';
+        $isOldUI = $html->find('body', 0)->getAttribute('data-static-path') === '/themes/classic';
+
+        if ($isOldUI) {
+            $current_user = substr(trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00'), 1);
+        } else {
+            $current_user = $html->find('.loggedin_user_avatar', 0)->getAttribute('alt');
+        }
+        $this->saveCacheValue('username', $current_user);
+
+        return $isOldUI;
     }
 
     private function checkDisabled($html)
@@ -628,6 +635,27 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
             $this->items[] = $item;
         } else {
             returnServerError("Incorrectly parsed item. Check the code!\nType: " . gettype($item) . "\nprint_r(item:)\n" . print_r($item));
+        }
+    }
+
+    private function getUser()
+    {
+        $username = $this->loadCacheValue('username');
+        if (isset($username)) {
+            $html = $this->getFASimpleHTMLDOM(self::URI . 'msg/others/');
+            $this->isOldUI($html);
+            $username = $this->loadCacheValue('username');
+        }
+        return $username;
+    }
+
+    public function getName()
+    {
+        $username = $this->getUser();
+        if (isset($username)) {
+            return self::NAME . ' for ' . $username;
+        } else {
+            return self::NAME;
         }
     }
 }
