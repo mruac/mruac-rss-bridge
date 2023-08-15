@@ -639,7 +639,7 @@ class mruac_FurAffinityNotificationsBridge extends BridgeAbstract
         if (is_array($item) || is_object($item)) {
             $this->items[] = $item;
         } else {
-            returnServerError("Incorrectly parsed item. Check the code!\nType: " . gettype($item) . "\nprint_r(item:)\n" . print_r($item));
+            returnServerError("Incorrectly parsed item. Check the code!\nType: " . gettype($item) . "\nprint_r(item:)\n" . var_dump($item));
         }
     }
 
