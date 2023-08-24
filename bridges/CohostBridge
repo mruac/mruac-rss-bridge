@@ -1,0 +1,81 @@
+<?php
+
+class CohostBridge extends FeedExpander
+{
+    //https://cohost.org/lexyeevee
+    //https://cohost.org/staff/rss/public.atom
+    //not available for private or non-public (not accessible without account) pages.
+    //Pages can set visibility in https://cohost.org/rc/project/settings
+    const NAME            = 'Cohost.org Bridge';
+    const URI            = 'https://cohost.org';
+    const DESCRIPTION    = 'Expands Cohost feeds with additional features not included in the original feed.<br>Currently expanding: Past linked posts on reshared posts, Asked details.';
+    const MAINTAINER    = 'mruac';
+    const CACHE_TIMEOUT    = 1800; //30mins
+    const PARAMETERS    = [
+        [
+            'user' => [ //TESTME: private / non-public accounts. Maybe need to authenticate with a cookie?
+                'name' => 'Cohost username',
+                'type' => 'text',
+                'required' => true
+            ]
+        ]
+    ];
+/*
+    protected $id;
+
+    public function getURI()
+    {
+        if ($this->id) {
+            return self::URI . 'rss/series/' . $this->id;
+        } else {
+            return self::URI . 'series/' . $this->getInput('title') . '/info/';
+        }
+        return self::URI;
+    }
+
+    protected function parseItem($feedItem)
+    {
+        $item = parent::parseItem($feedItem);
+
+        $namespaces = $feedItem->getNamespaces(true);
+        if (isset($namespaces['content'])) {
+            $description = $feedItem->children($namespaces['content']);
+            if (isset($description->encoded)) {
+                $item['content'] = (string)$description->encoded;
+            }
+        }
+
+        if ($this->getInput('extend_content')) {
+            $html = getSimpleHTMLDOM($item['uri']) or returnServerError('Could not request ' . $this->getURI());
+            if (!$item['content']) {
+                $item['content'] = '';
+            }
+            if ($html->find('article.main__body', 0)) {
+                foreach ($html->find('article', 0)->find('img') as $line) {
+                    $item['content'] .= '<img src="' . $line->{'data-src'} . '">';
+                }
+            } elseif ($html->find('article.main__body--book', 0)) {
+                $item['content'] .= $html->find('article.viewer__body', 0)->innertext;
+            } else {
+                $item['content'] .= '<h1 style="font-size:24px;text-align:center;">Locked episode</h1>';
+                $item['content'] .= '<h5 style="text-align:center;">' . $html->find('div.js-viewer-filter h5', 0)->plaintext . '</h5>';
+            }
+        }
+
+        return $item;
+    }
+
+    public function collectData()
+    {
+        if (preg_match('/^[\d]+$/', $this->getInput('title'))) {
+            $this->id = $this->getInput('title');
+        }
+        if ($this->getInput('force_title') or !$this->id) {
+            $html = getSimpleHTMLDOM($this->getURI()) or returnServerError('Could not request ' . $this->getURI());
+            $this->id = $html->find('meta[property$=":url"]', 0)->content;
+            $this->id = str_ireplace(['tapastic://series/', '/info'], '', $this->id);
+        }
+        $this->collectExpandableDatas($this->getURI());
+    }
+    */
+}
