@@ -744,8 +744,8 @@ class FurAffinityBridge extends BridgeAbstract
 
     public function collectData()
     {
-        if (!is_null($this->getOption('bCookie')) && !is_null($this->getOption('aCookie'))) {
-            $this->FA_AUTH_COOKIE = 'b=' . $this->getOption('bCookie') . '; a=' . $this->getOption('aCookie');
+        if (!is_null(Configuration::getConfig(get_class(),'bCookie')) && !is_null(Configuration::getConfig(get_class(),'aCookie'))) {
+            $this->FA_AUTH_COOKIE = 'b=' . Configuration::getConfig(get_class(),'bCookie') . '; a=' . Configuration::getConfig(get_class(),'aCookie');
         }
 
         switch ($this->queriedContext) {
