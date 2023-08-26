@@ -6,7 +6,7 @@ class InkbunnyUserBridge extends BridgeAbstract
     const URI = 'https://inkbunny.net';
     const CACHE_TIMEOUT = 900; // 15mn
     const MAINTAINER = 'mruac';
-    const DESCRIPTION = 'Bridges for Inkbunny.net <br> For Submissions search bridge: Leave "Type" blank for all submission types.';
+    const DESCRIPTION = 'Bridges for Inkbunny.net <br> For Submissions search bridge: Leave "Type" unchecked for all submission types.';
     const PARAMETERS = [
         'Submissions search' => [
             // 'output_mode' => ['name'=>'','type'=>'checkbox'],
@@ -37,12 +37,11 @@ class InkbunnyUserBridge extends BridgeAbstract
                 'defaultValue' => 'and'
             ],
             'keywords' => [
-                'name' => 'Search in: Keywords',
-                'type' => 'checkbox',
-                'defaultValue' => true
+                'name' => '(Default if none selected) Search in: Keywords',
+                'type' => 'checkbox'
             ],
             'title' => [
-                'name' => 'Search in: Title',
+                'name' => '(Default if none selected) Search in: Title',
                 'type' => 'checkbox'
             ],
             'description' => [
@@ -64,9 +63,8 @@ class InkbunnyUserBridge extends BridgeAbstract
             ],
             // 'username' => ['name' => 'From username','type' => 'text'],
             'rating1' => [
-                'name' => 'Maturity: General',
-                'type' => 'checkbox',
-                'defaultValue' => true
+                'name' => '(Default if none selected) Maturity: General',
+                'type' => 'checkbox'
             ],
             'rating2' => [
                 'name' => 'Maturity: Mature - Nudity',
@@ -84,18 +82,13 @@ class InkbunnyUserBridge extends BridgeAbstract
                 'name' => 'Maturity: Adult - Strong Violence',
                 'type' => 'checkbox'
             ],
-            'user_id' => [
-                'name' => 'Submissions From user ID',
-                'type' => 'number',
-                'defaultValue' => 0,
-                'title' => 'Get ID from end of "user_id" in link. e.g. inkbunny.net/userfavorites_process.php?favs_user_id=1'
+            'username' => [
+                'name' => 'Submissions from username',
+                'type' => 'text'
             ],
-            'favs_user_id' => [
-                'name' => 'Favourites by user ID',
-                'type' => 'number',
-                'defaultValue' => 0,
-                'title' => 'Get ID from end of "user_id" in link. e.g. inkbunny.net/userfavorites_process.php?favs_user_id=1'
-
+            'favs_username' => [
+                'name' => 'Favourites by username',
+                'type' => 'text'
             ],
             'picture' => [ // 1
                 'name' => 'Type: Picture/Pinup',
@@ -179,15 +172,8 @@ class InkbunnyUserBridge extends BridgeAbstract
                 ],
                 'defaultValue' => 'create_datetime'
             ],
-            'dayslimit' => [ //if 0, return nothing to the api.
-                'name' => 'In the last number of Days (0 = all time)',
-                'type' => 'number',
-                'defaultValue' => 0
-            ],
-            'random' => [
-                'name' => 'Sort results randomly',
-                'type' => 'checkbox',
-            ],
+            // 'dayslimit' => ['name' => 'In the last number of Days (0 = all time)','type' => 'number','defaultValue' => 0], //if 0, return nothing to the api.
+            // 'random' => ['name' => 'Sort results randomly','type' => 'checkbox'],
             'scraps' => [
                 'name' => 'Include scraps?',
                 'type' => 'list',
@@ -200,8 +186,7 @@ class InkbunnyUserBridge extends BridgeAbstract
             ],
             // 'count_limit' => ['name' => '', 'type' => 'checkbox'],
         ],
-        'Newest submissions from your watching' => [],
-        'Newest Favourites from your watching' => [],
+        'Newest submissions from your watching' => []
     ];
     const CONFIGURATION = [ // If no username/pass, get guest SID and disable user pages and search capabilities ("from your watching" contexts and "unread_datetime" search options).
         'username' => [
@@ -212,51 +197,74 @@ class InkbunnyUserBridge extends BridgeAbstract
         ]
     ];
 
-    private $sid;
-
     public function collectData()
     {
         if ($this->queriedContext === 'Submissions search') {
+            /** @var array $opts */
             $opts = [
-                'unread_submissions' =>     $this->getInput('unread_submissions') ? 'yes' : 'no', //Restrict to unread submissions inbox of user
-                'text' =>      strlen($this->getInput('text')) === 0 ? null : $this->getInput('text'), //search string
-                'string_join_type' =>   $this->getInput('string_join_type'), //AND, OR, EXACT
+                'unread_submissions' => $this->getInput('unread_submissions') ? 'yes' : 'no', //Restrict to unread submissions inbox of user
+                'text' => strlen($this->getInput('text')) === 0 ? null : $this->getInput('text'), //search string
+                'string_join_type' => $this->getInput('string_join_type'), //AND, OR, EXACT
                 'keywords' => $this->getInput('keywords') ? 'yes' : 'no', //search in keywords
                 'title' => $this->getInput('title') ? 'yes' : 'no', //search in title
                 'description' => $this->getInput('description') ? 'yes' : 'no', //search in desc
                 'md5' => $this->getInput('md5') ? 'yes' : 'no', //search in [MD5 hash](https://wiki.inkbunny.net/wiki/MD5#Stored_MD5_Hashes)
-                'field_join_type' =>   $this->getInput('field_join_type') ? 'and' : 'or',
-                'keyword_id' =>     $this->getInput('keyword_id') === 0 ? null : $this->getInput('keyword_id'), //SINGLE keyword search (overrides all text search options)
-                'user_id' =>   $this->getInput('user_id') === 0 ? null : $this->getInput('user_id'),
-                'favs_user_id' =>    $this->getInput('favs_user_id') === 0 ? null :  $this->getInput('favs_user_id'),
-                //TESTME: try 'content_tags[]' in the param? - opts obtained from search UI pagea
-                'content_tags[1]' => $this->getInput('rating1') ? 'on' : null, // General
-                'content_tags[2]' => $this->getInput('rating2') ? 'on' : null, // Nudity - Nonsexual nudity exposing breasts or genitals (must not show arousal)
-                'content_tags[3]' => $this->getInput('rating3') ? 'on' : null, // Violence - Mild violence
-                'content_tags[4]' => $this->getInput('rating4') ? 'on' : null, // Sexual Themes - Erotic imagery, sexual activity or arousal
-                'content_tags[5]' => $this->getInput('rating5') ? 'on' : null,  // Strong Violence - Strong violence, blood, serious injury or death
-                'type' =>       [ //type - Limit results to submissions with this type id. Multiple type ids are allowed, separated by commas, NO SPACES.
-                    '1' => $this->getInput('picture'),
-                    '2' => $this->getInput('sketch'),
-                    '3' => $this->getInput('picseries'),
-                    '4' => $this->getInput('comic'),
-                    '5' => $this->getInput('portfolio'),
-                    '6' => $this->getInput('flashanim'),
-                    '7' => $this->getInput('flashgame'),
-                    '8' => $this->getInput('vidfeat'),
-                    '9' => $this->getInput('vidanim'),
+                'field_join_type' => $this->getInput('field_join_type') ? 'and' : 'or',
+                'keyword_id' => $this->getInput('keyword_id') > 0 ? strval($this->getInput('keyword_id')) : null, //SINGLE keyword search (overrides all text search options)
+                'username' => strlen($this->getInput('username')) === 0 ? null : strtolower($this->getInput('username')),
+                'favs_username' => strlen($this->getInput('favs_username')) === 0 ? null : strtolower($this->getInput('favs_username')),
+                'type' => [ //type - Limit results to submissions with this type id. Multiple type ids are allowed, separated by commas, NO SPACES.
+                    '1'  => $this->getInput('picture'),
+                    '2'  => $this->getInput('sketch'),
+                    '3'  => $this->getInput('picseries'),
+                    '4'  => $this->getInput('comic'),
+                    '5'  => $this->getInput('portfolio'),
+                    '6'  => $this->getInput('flashanim'),
+                    '7'  => $this->getInput('flashgame'),
+                    '8'  => $this->getInput('vidfeat'),
+                    '9'  => $this->getInput('vidanim'),
                     '10' => $this->getInput('mussingle'),
                     '11' => $this->getInput('musalbum'),
                     '12' => $this->getInput('writdoc'),
                     '13' => $this->getInput('charsheet'),
                     '14' => $this->getInput('photo')
                 ],
-                'pool_id' =>    $this->getInput('pool_id') === 0 ? null : $this->getInput('pool_id'), //pool_id - Show only submissions from the Pool that has this Pool ID.
-                'orderby' =>    $this->getInput('orderby'), //orderby - Order search results by selected criteria.
-                'dayslimit' =>  $this->getInput('dayslimit') === 0 ? null : $this->getInput('dayslimit'), //dayslimit - Limit results to those uploaded in the last X number of days. (if 0, then n/a)
-                'random' =>     $this->getInput('random')  ? 'yes' : 'no',
-                'scraps' =>     $this->getInput('scraps'),
+                'pool_id' => $this->getInput('pool_id') > 0 ? strval($this->getInput('pool_id')) : null, //pool_id - Show only submissions from the Pool that has this Pool ID.
+                'orderby' => $this->getInput('orderby'), //orderby - Order search results by selected criteria.
+                'scraps' => $this->getInput('scraps'),
             ];
+
+            $ratings = [
+                $this->getInput('rating1') ? '0' : null, // General
+                $this->getInput('rating2') ? '1' : null, // Nudity - Nonsexual nudity exposing breasts or genitals (must not show arousal)
+                $this->getInput('rating3') ? '2' : null, // Violence - Mild violence
+                $this->getInput('rating4') ? '3' : null, // Sexual Themes - Erotic imagery, sexual activity or arousal
+                $this->getInput('rating5') ? '4' : null  // Strong Violence - Strong violence, blood, serious injury or death
+            ];
+
+            if ($opts['username']) {
+                $res = $this->getData(self::URI . "/api_username_autosuggest.php?username={$opts['username']}", true);
+                $index = array_search($opts['username'], array_map('strtolower', array_column($res['results'], 'value')));
+                if ($index > -1) {
+                    $this->saveCacheValue($opts['username'], $res['results'][$index]['value']);
+                    $opts['user_id'] = $res['results'][$index]['id'];
+                    $opts['username'] = $res['results'][$index]['value'];
+                } else {
+                    returnServerError('Username not found: ' . $opts['username']);
+                }
+            }
+
+            if ($opts['favs_username']) {
+                $res = $this->getData(self::URI . "/api_username_autosuggest.php?username={$opts['favs_username']}", true);
+                $index = array_search($opts['favs_username'], array_map('strtolower', array_column($res['results'], 'value')));
+                if ($index > -1) {
+                    $this->saveCacheValue($opts['favs_username'], $res['results'][$index]['value']);
+                    $opts['favs_user_id'] = $res['results'][$index]['id'];
+                    $opts['favs_username'] = $res['results'][$index]['value'];
+                } else {
+                    returnServerError('Username not found: ' . $opts['favs_username']);
+                }
+            }
 
             $type_str = implode(',', array_keys(array_filter($opts['type'], function ($v) {
                 return $v;
@@ -267,132 +275,174 @@ class InkbunnyUserBridge extends BridgeAbstract
                 return $v !== null;
             });
 
-            if (!array_key_exists('content_tags[1]', $opts)) {
-                $opts['content_tags[1]'] = 'on';
+            $ratings = array_filter($ratings, function ($v) {
+                return $v !== null;
+            });
+
+            //set defaults
+            if (
+                sizeof(array_diff(['0', '1', '2', '3', '4'], $ratings)) === 5
+            ) {
+                $ratings = ['0'];
             }
 
+            if (
+                $opts['keywords'] === 'no'
+                && $opts['title'] === 'no'
+                && $opts['description'] === 'no'
+                && $opts['md5'] === 'no'
+            ) {
+                $opts['keywords'] = 'yes';
+                $opts['title'] = 'yes';
+            }
 
-            //now actually perform the search and parse it.
-            $url = "https://inkbunny.net/api_search.php?sid={$this->getSID()}&submission_ids_only=yes";
+            $url = "https://inkbunny.net/api_search.php?sid={$this->getSID()}&submissions_per_page=30";
             foreach ($opts as $key => $value) {
-                $url .= "{$key}={$value}&";
+                $url .= "&{$key}={$value}";
             }
             $res = $this->getData($url, true);
-            // foreach ($res['submissions'] as $submissions){}
-            $submission_ids = implode(',', array_reduce($res['submissions'], function ($acc, $v) {
-                array_push($acc, $v['submission_id']);
-                return $acc;
-            }, []));
+
+            $submission_ids = implode(
+                ',',
+                array_reduce($res['submissions'], function ($acc, $v) use ($ratings) {
+                    if (in_array($v['rating_id'], $ratings)) {
+                        array_push($acc, $v['submission_id']);
+                    }
+                    return $acc;
+                }, [])
+            );
+            $submission_opts = [
+                'sort_keywords_by' => 'submissions_count',
+                'show_description_bbcode_parsed' => 'yes', //up to 100,000 chars
+                'show_pools' => 'yes'
+                // 'show_writing_bbcode_parsed' => 'yes' //only if submission type is writing, and up to 100,000+ chars. Disabled for this reason.
+            ];
+            $url = self::URI . "/api_submissions.php?sid={$this->getSID()}&submission_ids={$submission_ids}";
+            foreach ($submission_opts as $key => $value) {
+                $url .= "&{$key}={$value}";
+            }
+            $data = $this->getData($url, true);
+
+            if ($opts['keyword_id'] ?? null) {
+                $index = array_search($opts['keyword_id'], array_column($data['submissions'][0]['keywords'], 'keyword_id'));
+                $this->saveCacheValue($opts['keyword_id'], $data['submissions'][0]['keywords'][$index]['keyword_name']);
+            }
+            if ($opts['pool_id'] ?? null) {
+                $index = array_search($opts['pool_id'], array_column($data['submissions'][0]['pools'], 'pool_id'));
+                $this->saveCacheValue($opts['pool_id'], $data['submissions'][0]['pools'][$index]['name']);
+                $this->saveCacheValue($opts['pool_id'] . '_username', $data['submissions'][0]['username']);
+            }
+
+            $this->parseSubmissions(array_reverse($data['submissions']));
+        }
+
+        if ($this->queriedContext === 'Newest submissions from your watching') {
+            $url = self::URI . "/api_search.php?sid={$this->getSID()}&submissions_per_page=30&unread_submissions=yes&submission_ids_only=yes";
+            $res = $this->getData($url, true);
+            $submission_ids = implode(
+                ',',
+                array_reduce($res['submissions'], function ($acc, $v) {
+                    array_push($acc, $v['submission_id']);
+                    return $acc;
+                }, [])
+            );
             $opts = [
                 'sort_keywords_by' => 'submissions_count',
                 'show_description_bbcode_parsed' => 'yes', //up to 100,000 chars
                 'show_pools' => 'yes'
                 // 'show_writing_bbcode_parsed' => 'yes' //only if submission type is writing, and up to 100,000+ chars. Disabled for this reason.
             ];
-            $url = "https://inkbunny.net/api_submissions.php?sid={$this->getSID()}&submission_ids={$submission_ids}";
+            $url = self::URI . "/api_submissions.php?sid={$this->getSID()}&submission_ids={$submission_ids}";
             foreach ($opts as $key => $value) {
-                $url .= "{$key}={$value}&";
+                $url .= "&{$key}={$value}";
             }
-            //DEBUG:
-            $url = 'https://inkbunny.net/api_submissions.php?sid=,DB-zXrWi1R62-3JxHkrMBixoJ&submission_ids=3099200,3098904,3099828,3099825,3099617,3099216,3097260,3095214,2559416,3059911,3055417&sort_keywords_by=submissions_count&show_description_bbcode_parsed=yes&show_pools=yes';
             $data = $this->getData($url, true);
+            $this->parseSubmissions(array_reverse($data['submissions']));
+        }
+    }
 
-            //note: test content parse here? https://inkbunny.net/bbcode.php
-            foreach ($data['submissions'] as $submission) {
-                /* 
-                $item['uri']        // URI to reach the subject ("https://...")
-                $item['title']      // Title of the item
-                $item['timestamp']  // Timestamp of the item in numeric or text format (compatible for strtotime())
-                $item['author']     // Name of the author for this item
-                $item['content']    // Content in HTML format
-                $item['enclosures'] // Array of URIs to an attachments (pictures, files, etc...)
-                $item['categories'] // Array of categories / tags / topics
-                $item['uid']        // A unique ID to identify the current item
-                */
+    private function parseSubmissions(array $submissions)
+    {
+        foreach ($submissions as $submission) {
+            $item = [];
+            $content = '';
 
-                $item = [];
-                $content = '';
+            foreach ($submission['files'] as $file) {
+                preg_match('/\.(doc|rtf|txt|json|flv|mp4|swf|mp3|png|jpg|gif)$/', $file['file_url_full'], $matches);
+                $ext = $matches[1];
 
-                foreach ($submission['files'] as $file) {
-                    preg_match('/\.(doc|rtf|txt|json|flv|mp4|swf|mp3|png|jpg|gif)$/', $file['file_url_full'], $matches);
-                    $ext = $matches[1];
+                preg_match("/{$file['file_id']}_[[:alnum:]]+?_(.*)/", $file['file_name'], $matches);
+                $filename = $matches[1];
 
-                    preg_match("/{$file['file_id']}_{$submission['username']}_(.*)/", $file['file_url_full'], $matches);
-                    $filename = $matches[1];
-
-                    //if no previewable "screen" size of the file, get thumbnail (or default thumbnail if no thumbnail).
-                    if ($file['screen_size_x'] === null) { 
-                        if (array_key_exists('thumbnail_url_huge', $file)) {
-                            $src = $file['thumbnail_url_huge'];
-                        } else {
-                            $src = $this->getThumb($ext);
-                        }
+                //if no previewable "screen" size of the file, get thumbnail (or default thumbnail if no thumbnail).
+                if ($file['screen_size_x'] === null) {
+                    if (array_key_exists('thumbnail_url_huge', $file)) {
+                        $src = $file['thumbnail_url_huge'];
                     } else {
-                        $src = $file['file_url_screen'];
+                        $src = $this->getThumb($ext);
                     }
-                    //check filetype and add accordingly. If Flash use img.
-                    switch ($ext) {
-                        case 'flv':
-                        case 'mp4':
-                            $content .= "<p>Download video: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
-                            break;
-                        case 'mp3':
-                            $content .= "<p>Download audio: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
-                            break;
-                        case 'swf':
-                            $content .= "<p>Download flash: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
-                            break;
-                        case 'doc':
-                        case 'rtf':
-                        case 'txt':
-                        case 'json':
-                            $content .= "<p>Download document: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
-                            break;
-                        case 'png':
-                        case 'jpg':
-                        case 'gif':
-                        default:
-                            $content .= "<p><img src=\"{$src}\"/></p><br>";
-                            break;
-                    }
+                } else {
+                    $src = $file['file_url_screen'];
                 }
-                if($submission['description_bbcode_parsed'] !== '<span style=\'word-wrap: break-word;\'></span>'){
-                $content .= '<hr>' . $submission['description_bbcode_parsed'];
+                //check filetype and add accordingly. If Flash use img.
+                switch ($ext) {
+                    case 'flv':
+                    case 'mp4':
+                        $content .= "<p>Download video: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
+                        break;
+                    case 'mp3':
+                        $content .= "<p>Download audio: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
+                        break;
+                    case 'swf':
+                        $content .= "<p>Download flash: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
+                        break;
+                    case 'doc':
+                    case 'rtf':
+                    case 'txt':
+                    case 'json':
+                        $content .= "<p>Download document: <a href=\"{$file['file_url_full']}\">{$filename}<br><img src=\"{$src}\"></a></p><br>";
+                        break;
+                    case 'png':
+                    case 'jpg':
+                    case 'gif':
+                    default:
+                        $content .= "<p><img src=\"{$src}\"/></p><br>";
+                        break;
                 }
-
-                if (sizeof($submission['pools']) > 0) {
-                    $content .= '<hr>📁 In Pool(s): ';
-                    foreach ($submission['pools'] as $pool) {
-                        $pool_url = self::URI . "/poolview_process.php?pool_id={$pool['pool_id']}";
-                        $content .= "<a href=\"{$pool_url}\">{$pool['name']}</a> ";
-                    }
-                }
-
-                $content .= '<hr>🏷 Keywords: ';
-                foreach ($submission['keywords'] as $keyword) {
-                    $keyword_url = self::URI . "/search_process.php?keyword_id={$keyword['keyword_id']}";
-                    $content .= "<a href=\"{$keyword_url}\">{$keyword['keyword_name']}</a> ";
-                }
-
-                $item['uri'] = self::URI . '/s/' . $submission['submission_id'];
-                $item['title'] = $submission['title'];
-                $item['timestamp'] = $submission['last_file_update_datetime'];
-                $item['author'] = $submission['username'];
-                $item['enclosures'] = array_reduce($submission['files'], function ($acc, $file) {
-                    array_push($acc, $file['file_url_full']);
-                    return $acc;
-                }, []);
-                $item['categories']  = [$submission['type_name']];
-                $item['content'] = $this->setReferrerPolicy($content);
-
-                $item['uid'] = self::URI . '/s/' . $submission['submission_id'];
-
-                $this->addItem($item);
             }
-        }
-        if ($this->queriedContext === 'Newest submissions from your watching') {
-        }
-        if ($this->queriedContext === 'Newest Favourites from your watching') {
+
+            if ($submission['description_bbcode_parsed'] !== '<span style=\'word-wrap: break-word;\'></span>') {
+                $content .= '<hr>' . $submission['description_bbcode_parsed'];
+            }
+
+            if (sizeof($submission['pools']) > 0) {
+                $content .= '<hr>📁 In Pool(s): ';
+                foreach ($submission['pools'] as $pool) {
+                    $pool_url = self::URI . "/poolview_process.php?pool_id={$pool['pool_id']}";
+                    $content .= "<a href=\"{$pool_url}\">{$pool['name']}</a> ";
+                }
+            }
+
+            $content .= '<hr>🏷 Keywords: ';
+            foreach ($submission['keywords'] as $keyword) {
+                $keyword_url = self::URI . "/search_process.php?keyword_id={$keyword['keyword_id']}";
+                $content .= "<a href=\"{$keyword_url}\">{$keyword['keyword_name']}</a> ";
+            }
+
+            $item['uri'] = self::URI . '/s/' . $submission['submission_id'];
+            $item['title'] = $submission['title'];
+            $item['timestamp'] = $submission['last_file_update_datetime'];
+            $item['author'] = $submission['username'];
+            $item['enclosures'] = array_reduce($submission['files'], function ($acc, $file) {
+                array_push($acc, $file['file_url_full']);
+                return $acc;
+            }, []);
+            $item['categories']  = [$submission['type_name']];
+            $item['content'] = $this->setReferrerPolicy($content);
+
+            $item['uid'] = self::URI . '/s/' . $submission['submission_id'];
+
+            $this->addItem($item);
         }
     }
 
@@ -406,7 +456,7 @@ class InkbunnyUserBridge extends BridgeAbstract
             $img->referrerpolicy = 'no-referrer';
         }
 
-        foreach ($html->find('a') as $a){
+        foreach ($html->find('a') as $a) {
             $a->rel = 'noreferrer';
         }
 
@@ -475,7 +525,7 @@ class InkbunnyUserBridge extends BridgeAbstract
         if (is_array($item) || is_object($item)) {
             $this->items[] = $item;
         } else {
-            returnServerError("Incorrectly parsed item. Check the code!<br>Type: " . gettype($item) . "<br>var_dump($item):<br>" . var_dump($item));
+            returnServerError('Incorrectly parsed item. Check the code!<br>Type: ' . gettype($item) . "<br>var_dump($item):<br>" . var_dump($item));
         }
     }
 
@@ -494,7 +544,7 @@ class InkbunnyUserBridge extends BridgeAbstract
             if ($pass) {
                 $authstr .= "&password={$pass}";
             }
-            $res = $this->getData(self::URI . "/api_login.php?{$authstr}", true);
+            $res = $this->getData(self::URI . "/api_login.php?{$authstr}");
             if (array_key_exists('sid', $res)) {
                 if ($user === 'guest') {
                     $res = $this->getData(self::URI . '/api_userrating.php?' . implode('&', [
@@ -508,7 +558,6 @@ class InkbunnyUserBridge extends BridgeAbstract
 
                     if (array_key_exists('sid', $res)) {
                         $this->saveCacheValue('sid', $res['sid']);
-                        $this->sid = $res['sid'];
                     }
                 }
             } else {
@@ -525,12 +574,15 @@ class InkbunnyUserBridge extends BridgeAbstract
     {
         //removes user options if not logged in and authenticated (eg. guest)
         $arr = static::PARAMETERS;
-        if (Configuration::getConfig(get_class(), 'password') && $this->sid) {
+        if (
+            Configuration::getConfig(get_class(), 'password')
+            && Configuration::getConfig(get_class(), 'username') !== null
+            && strlen(Configuration::getConfig(get_class(), 'username')) > 0
+        ) {
             return $arr;
         } else {
             unset(
                 $arr['Newest submissions from your watching'],
-                $arr['Newest Favourites from your watching'],
                 $arr['Submissions search']['orderby']['values']['Newest unread submissions'],
                 $arr['Submissions search']['orderby']['values']['Oldest unread submissions'],
                 $arr['Submissions search']['unread_submissions']
@@ -541,11 +593,70 @@ class InkbunnyUserBridge extends BridgeAbstract
 
     public function getName()
     {
-        $this->getSID();
-        if (Configuration::getConfig(get_class(), 'password') && $this->sid) {
-            return Configuration::getConfig(get_class(), 'username') . '\'s ' . static::NAME;
-        } else {
-            return static::NAME;
+        if ($this->queriedContext === 'Submissions search') {
+            $unread_submissions = $this->getInput('unread_submissions');
+            $text = strlen($this->getInput('text')) > 0 ? $this->getInput('text') : null;
+            $username = strlen($this->getInput('username')) === 0 ? null : strtolower($this->getInput('username'));
+            $favs_username = strlen($this->getInput('favs_username')) === 0 ? null : strtolower($this->getInput('favs_username'));
+            $keyword_id = $this->getInput('keyword_id') > 0 ? strval($this->getInput('keyword_id')) : null;
+            $pool_id = $this->getInput('pool_id') > 0 ? strval($this->getInput('pool_id')) : null;
+
+            if ($text) {
+                $name = "InkBunny Search for: {$text}";
+            }
+
+            if ($username) {
+                $val = $this->loadCacheValue($username);
+                if ($val) {
+                    $name = "Submissions from InkBunny user: {$val}";
+                } else {
+                    $name = "Submissions from InkBunny user: {$username}";
+                }
+            }
+
+            if ($favs_username) {
+                $val = $this->loadCacheValue($username);
+                if ($val) {
+                    $name = "Favourites from InkBunny user: {$val}";
+                } else {
+                    $name = "Favourites from InkBunny user: {$favs_username}";
+                }
+            }
+
+            if ($keyword_id) {
+                if ($this->loadCacheValue($keyword_id)) {
+                    $name = "InkBunny submissions for keyword: {$this->loadCacheValue($keyword_id)}";
+                } else {
+                    $name = "InkBunny submissions for keyword ID: {$keyword_id}";
+                }
+            }
+
+            if ($pool_id) {
+                if ($this->loadCacheValue($pool_id)) {
+                    $name = "InkBunny pool: {$this->loadCacheValue($pool_id)} - by {$this->loadCacheValue($pool_id . '_username')}";
+                } else {
+                    $name = "In InkBunny pool ID: {$pool_id}";
+                }
+            }
+
+            if ($unread_submissions) {
+                $name .= ' from unread submissions';
+            }
+            return $name;
         }
+
+        if (Configuration::getConfig(get_class(), 'password')) {
+            if (
+                $this->queriedContext === 'Newest submissions from your watching'
+                && Configuration::getConfig(get_class(), 'username') !== null
+                && strlen(Configuration::getConfig(get_class(), 'username')) > 0
+            ) {
+                return 'New Submissions from ' . Configuration::getConfig(get_class(), 'username') . '\'s watching';
+            }
+
+            return Configuration::getConfig(get_class(), 'username') . '\'s ' . static::NAME;
+        }
+
+        return static::NAME;
     }
 }
