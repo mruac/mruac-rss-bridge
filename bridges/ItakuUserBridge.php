@@ -899,7 +899,7 @@ class ItakuUserBridge extends BridgeAbstract
 
             foreach ($tag_types as $type => $str) {
                 if (strlen($str) > 0) {
-                    $content .= "🏷 <b>{$type}:</b>: {$str}<br/>";
+                    $content .= "🏷 <b>{$type}:</b> {$str}<br/>";
                 }
             }
         }
@@ -982,9 +982,11 @@ class ItakuUserBridge extends BridgeAbstract
 
     public function getName()
     {
-        $user_profile = $this->loadCacheValue('userprofile');
-        if (isset($user_profile)) {
-            return self::NAME . ' for ' . $user_profile['profile']['owner_username'];
+        if ($this->getOption('auth')) {
+            $user_profile = $this->loadCacheValue('userprofile');
+            if (isset($user_profile)) {
+                return self::NAME . ' for ' . $user_profile['profile']['owner_username'];
+            }
         } else {
             return self::NAME;
         }
@@ -992,9 +994,11 @@ class ItakuUserBridge extends BridgeAbstract
 
     public function getURI()
     {
-        $user_profile = $this->loadCacheValue('userprofile');
-        if (isset($username)) {
-            return self::URI . '/user/' . $user_profile['profile']['owner_username'];
+        if ($this->getOption('auth')) {
+            $user_profile = $this->loadCacheValue('userprofile');
+            if (isset($username)) {
+                return self::URI . '/user/' . $user_profile['profile']['owner_username'];
+            }
         } else {
             return self::URI;
         }
