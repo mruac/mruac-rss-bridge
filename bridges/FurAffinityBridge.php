@@ -766,6 +766,8 @@ class FurAffinityBridge extends BridgeAbstract
         switch ($this->queriedContext) {
             case 'Search':
                 $data = [
+                    'order-by' => 'date', //force search by date instead of relevancy
+                    'order-direction' => 'desc',
                     'q' => $this->getInput('q'),
                     'perpage' => 72,
                     'rating-general' => ($this->getInput('rating-general') === true ? 'on' : 0),
