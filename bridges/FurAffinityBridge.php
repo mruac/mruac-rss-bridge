@@ -657,14 +657,14 @@ class FurAffinityBridge extends BridgeAbstract
         switch ($this->queriedContext) {
             case 'Search':
                 return 'Search For '
-                . $this->getInput('q');
+                    . $this->getInput('q');
             case 'Browse':
                 return 'Browse';
             case 'Journals':
                 return $this->getInput('username-journals');
             case 'Single Journal':
                 return 'Journal '
-                . $this->getInput('journal-id');
+                    . $this->getInput('journal-id');
             case 'Gallery':
                 return $this->getInput('username-gallery');
             case 'Scraps':
@@ -673,8 +673,8 @@ class FurAffinityBridge extends BridgeAbstract
                 return $this->getInput('username-favorites');
             case 'Gallery Folder':
                 return $this->getInput('username-folder')
-                . '\'s Folder '
-                . $this->getInput('folder-id');
+                    . '\'s Folder '
+                    . $this->getInput('folder-id');
             default:
                 $name = parent::getName();
                 if ($this->getOption('aCookie') !== null) {
@@ -692,29 +692,29 @@ class FurAffinityBridge extends BridgeAbstract
         switch ($this->queriedContext) {
             case 'Search':
                 return 'FurAffinity Search For '
-                . $this->getInput('q');
+                    . $this->getInput('q');
             case 'Browse':
                 return 'FurAffinity Browse';
             case 'Journals':
                 return 'FurAffinity Journals By '
-                . $this->getInput('username-journals');
+                    . $this->getInput('username-journals');
             case 'Single Journal':
                 return 'FurAffinity Journal '
-                . $this->getInput('journal-id');
+                    . $this->getInput('journal-id');
             case 'Gallery':
                 return 'FurAffinity Gallery By '
-                . $this->getInput('username-gallery');
+                    . $this->getInput('username-gallery');
             case 'Scraps':
                 return 'FurAffinity Scraps By '
-                . $this->getInput('username-scraps');
+                    . $this->getInput('username-scraps');
             case 'Favorites':
                 return 'FurAffinity Favorites By '
-                . $this->getInput('username-favorites');
+                    . $this->getInput('username-favorites');
             case 'Gallery Folder':
                 return 'FurAffinity Gallery Folder '
-                . $this->getInput('folder-id')
-                . ' By '
-                . $this->getInput('username-folder');
+                    . $this->getInput('folder-id')
+                    . ' By '
+                    . $this->getInput('username-folder');
             default:
                 return parent::getDescription();
         }
@@ -725,36 +725,36 @@ class FurAffinityBridge extends BridgeAbstract
         switch ($this->queriedContext) {
             case 'Search':
                 return self::URI
-                . '/search';
+                    . '/search';
             case 'Browse':
                 return self::URI
-                . '/browse';
+                    . '/browse';
             case 'Journals':
                 return self::URI
-                . '/journals/'
-                . $this->getInput('username-journals');
+                    . '/journals/'
+                    . $this->getInput('username-journals');
             case 'Single Journal':
                 return self::URI
-                . '/journal/'
-                . $this->getInput('journal-id');
+                    . '/journal/'
+                    . $this->getInput('journal-id');
             case 'Gallery':
                 return self::URI
-                . '/gallery/'
-                . $this->getInput('username-gallery');
+                    . '/gallery/'
+                    . $this->getInput('username-gallery');
             case 'Scraps':
                 return self::URI
-                . '/scraps/'
-                . $this->getInput('username-scraps');
+                    . '/scraps/'
+                    . $this->getInput('username-scraps');
             case 'Favorites':
                 return self::URI
-                . '/favorites/'
-                . $this->getInput('username-favorites');
+                    . '/favorites/'
+                    . $this->getInput('username-favorites');
             case 'Gallery Folder':
                 return self::URI
-                . '/gallery/'
-                . $this->getInput('username-folder')
-                . '/folder/'
-                . $this->getInput('folder-id');
+                    . '/gallery/'
+                    . $this->getInput('username-folder')
+                    . '/folder/'
+                    . $this->getInput('folder-id');
             default:
                 return parent::getURI();
         }
@@ -766,19 +766,19 @@ class FurAffinityBridge extends BridgeAbstract
         switch ($this->queriedContext) {
             case 'Search':
                 $data = [
-                'q' => $this->getInput('q'),
-                'perpage' => 72,
-                'rating-general' => ($this->getInput('rating-general') === true ? 'on' : 0),
-                'rating-mature' => ($this->getInput('rating-mature') === true ? 'on' : 0),
-                'rating-adult' => ($this->getInput('rating-adult') === true ? 'on' : 0),
-                'range' => $this->getInput('range'),
-                'type-art' => ($this->getInput('type-art') === true ? 'on' : 0),
-                'type-flash' => ($this->getInput('type-flash') === true ? 'on' : 0),
-                'type-photo' => ($this->getInput('type-photo') === true ? 'on' : 0),
-                'type-music' => ($this->getInput('type-music') === true ? 'on' : 0),
-                'type-story' => ($this->getInput('type-story') === true ? 'on' : 0),
-                'type-poetry' => ($this->getInput('type-poetry') === true ? 'on' : 0),
-                'mode' => $this->getInput('mode')
+                    'q' => $this->getInput('q'),
+                    'perpage' => 72,
+                    'rating-general' => ($this->getInput('rating-general') === true ? 'on' : 0),
+                    'rating-mature' => ($this->getInput('rating-mature') === true ? 'on' : 0),
+                    'rating-adult' => ($this->getInput('rating-adult') === true ? 'on' : 0),
+                    'range' => $this->getInput('range'),
+                    'type-art' => ($this->getInput('type-art') === true ? 'on' : 0),
+                    'type-flash' => ($this->getInput('type-flash') === true ? 'on' : 0),
+                    'type-photo' => ($this->getInput('type-photo') === true ? 'on' : 0),
+                    'type-music' => ($this->getInput('type-music') === true ? 'on' : 0),
+                    'type-story' => ($this->getInput('type-story') === true ? 'on' : 0),
+                    'type-poetry' => ($this->getInput('type-poetry') === true ? 'on' : 0),
+                    'mode' => $this->getInput('mode')
                 ];
                 $html = $this->postFASimpleHTMLDOM($data);
                 $limit = (is_int($this->getInput('limit')) ? $this->getInput('limit') : 10);
@@ -786,14 +786,14 @@ class FurAffinityBridge extends BridgeAbstract
                 break;
             case 'Browse':
                 $data = [
-                'cat' => $this->getInput('cat'),
-                'atype' => $this->getInput('atype'),
-                'species' => $this->getInput('species'),
-                'gender' => $this->getInput('gender'),
-                'perpage' => 72,
-                'rating_general' => ($this->getInput('rating_general') === true ? 'on' : 0),
-                'rating_mature' => ($this->getInput('rating_mature') === true ? 'on' : 0),
-                'rating_adult' => ($this->getInput('rating_adult') === true ? 'on' : 0)
+                    'cat' => $this->getInput('cat'),
+                    'atype' => $this->getInput('atype'),
+                    'species' => $this->getInput('species'),
+                    'gender' => $this->getInput('gender'),
+                    'perpage' => 72,
+                    'rating_general' => ($this->getInput('rating_general') === true ? 'on' : 0),
+                    'rating_mature' => ($this->getInput('rating_mature') === true ? 'on' : 0),
+                    'rating_adult' => ($this->getInput('rating_adult') === true ? 'on' : 0)
                 ];
                 $html = $this->postFASimpleHTMLDOM($data);
                 $limit = (is_int($this->getInput('limit-browse')) ? $this->getInput('limit-browse') : 10);
@@ -822,14 +822,14 @@ class FurAffinityBridge extends BridgeAbstract
     private function postFASimpleHTMLDOM($data)
     {
         $opts = [
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => http_build_query($data)
-            ];
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => http_build_query($data)
+        ];
         $header = [
-                'Host: ' . parse_url(self::URI, PHP_URL_HOST),
-                'Content-Type: application/x-www-form-urlencoded',
-                'Cookie: ' . $this->FA_AUTH_COOKIE
-            ];
+            'Host: ' . parse_url(self::URI, PHP_URL_HOST),
+            'Content-Type: application/x-www-form-urlencoded',
+            'Cookie: ' . $this->FA_AUTH_COOKIE
+        ];
 
         $html = getSimpleHTMLDOM($this->getURI(), $header, $opts);
         $html = defaultLinkTo($html, $this->getURI());
@@ -840,8 +840,8 @@ class FurAffinityBridge extends BridgeAbstract
     private function getFASimpleHTMLDOM($url, $cache = false)
     {
         $header = [
-                'Cookie: ' . $this->FA_AUTH_COOKIE
-            ];
+            'Cookie: ' . $this->FA_AUTH_COOKIE
+        ];
 
         if ($cache) {
             $html = getSimpleHTMLDOMCached($url, 86400, $header); // 24 hours
@@ -853,6 +853,14 @@ class FurAffinityBridge extends BridgeAbstract
 
         return $html;
     }
+
+    private function isOldUI($html)
+    {
+        $isOldUI = $html->find('body', 0)->getAttribute('data-static-path') === '/themes/classic';
+
+        return $isOldUI;
+    }
+
 
     private function saveLoggedInUser($html)
     {
@@ -960,7 +968,12 @@ class FurAffinityBridge extends BridgeAbstract
                         $imgURL = 'https:' . $previewSrc;
                     }
 
-                    $description = $submissionHTML->find('div.submission-description', 0);
+                    if ($this->isOldUI($submissionHTML)) {
+                        $description = $submissionHTML->find('.maintable', 1);
+                        $description = $description ? $description->find('td', 3) : null;
+                    } else {
+                        $description = $submissionHTML->find('div.submission-description', 0);
+                    }
                     if ($description) {
                         $this->setReferrerPolicy($description);
                         $description = trim($description->innertext);
