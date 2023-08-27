@@ -7,6 +7,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
     const CACHE_TIMEOUT = 900; // 15min
     const MAINTAINER = 'mrauc';
     const DESCRIPTION = 'User pages from FurAffinity.net';
+    const LIMIT = 15; //limits the number of records processed. The higher the limit the more time time and bandwidth this uses.
     const CONFIGURATION = [
         'aCookie' => [
             'required' => true
@@ -123,7 +124,12 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             } else {
                 $submission_elem = $html->find('#messagecenter-submissions figure');
             }
+
+            $limit = self::LIMIT;
             foreach ($submission_elem as $submission) {
+                if ($limit-- < 0) {
+                    break;
+                }
                 $id = substr($submission->getAttribute('id'), 4);
                 $uri = 'view/' . $id;
                 $this->addItem($this->getSubmission($uri, $oldUI));
@@ -147,7 +153,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
 
                 foreach ($watchers as $watcher) {
                     if ($watcher->hasClass('section-controls')) {
-                        break;
+                        continue;
                     }
                     $user = $watcher->find('.info span', 0)->plaintext;
                     $date = $watcher->find('.info span', 1)->getAttribute('title');
@@ -169,34 +175,66 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             if ($comments) {
                 if ($oldUI) {
                     $current_user = substr(trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00'), 1);
+
+                    $limit = self::LIMIT;
                     foreach ($html->find('fieldset#messages-comments-submission li') as $submission_comment) {
-                        if ($submission_comment->hasClass('section-controls')) {
+                        if ($limit-- < 0) {
                             break;
+                        }
+                        if ($submission_comment->hasClass('section-controls')) {
+                            continue;
                         }
                         $this->addItem($this->parseCommentNotif($submission_comment, $oldUI));
                     }
+
+                    $limit = self::LIMIT;
                     foreach ($html->find('fieldset#messages-comments-journal li') as $journal_comment) {
-                        if ($journal_comment->hasClass('section-controls')) {
+                        if ($limit-- < 0) {
                             break;
+                        }
+                        if ($journal_comment->hasClass('section-controls')) {
+                            continue;
                         }
                         $this->addItem($this->parseCommentNotif($journal_comment, $oldUI));
                     }
+
+                    $limit = self::LIMIT;
+
                     foreach ($html->find('fieldset#messages-shouts li') as $shout) {
-                        if ($shout->hasClass('section-controls')) {
+                        if ($limit-- < 0) {
                             break;
+                        }
+
+                        if ($shout->hasClass('section-controls')) {
+                            continue;
                         }
                         $this->addItem($this->parseCommentNotif($shout, $oldUI, $current_user));
                     }
                 } else {
                     $current_user = $html->find('.loggedin_user_avatar', 0);
                     $current_user = $current_user ? $current_user->getAttribute('alt') : null;
+
+                    $limit = self::LIMIT;
                     foreach ($html->find('#messages-comments-submission li') as $submission_comment) {
+                        if ($limit-- < 0) {
+                            break;
+                        }
                         $this->addItem($this->parseCommentNotif($submission_comment, $oldUI));
                     }
+
+                    $limit = self::LIMIT;
                     foreach ($html->find('#comments-journal li') as $journal_comment) {
+                        if ($limit-- < 0) {
+                            break;
+                        }
                         $this->addItem($this->parseCommentNotif($journal_comment, $oldUI));
                     }
+
+                    $limit = self::LIMIT;
                     foreach ($html->find('#messages-shouts li') as $shout) {
+                        if ($limit-- < 0) {
+                            break;
+                        }
                         $this->addItem($this->parseCommentNotif($shout, $oldUI, $current_user));
                     }
                 }
@@ -206,7 +244,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
                 //same for both old and new ui
                 foreach ($html->find('#messages-favorites li') as $favourite) {
                     if ($favourite->hasClass('section-controls')) {
-                        break;
+                        continue;
                     }
                     $this->addItem($this->parseFavourites($favourite));
                 }
@@ -214,14 +252,22 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
 
             if ($journals) {
                 if ($oldUI) { //new journals (old UI)
+                    $limit = self::LIMIT;
                     foreach ($html->find('#journals li') as $journal) {
-                        if ($journal->hasClass('section-controls')) {
+                        if ($limit-- < 0) {
                             break;
+                        }
+                        if ($journal->hasClass('section-controls')) {
+                            continue;
                         }
                         $this->addItem($this->parseJournals($journal, $oldUI));
                     }
                 } else { //new journals (new UI)
+                    $limit = self::LIMIT;
                     foreach ($html->find('#messages-journals li') as $journal) {
+                        if ($limit-- < 0) {
+                            break;
+                        }
                         $this->addItem($this->parseJournals($journal, $oldUI));
                     }
                 }
@@ -237,7 +283,11 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             $oldUI = $this->isOldUI($html);
 
             $unreads = $html->find('.note-unread');
+            $limit = self::LIMIT;
             foreach ($unreads as $unread) {
+                if ($limit-- < 0) {
+                    break;
+                }
                 $this->addItem($this->getNote($unread, $oldUI));
             }
         }
