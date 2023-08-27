@@ -840,7 +840,7 @@ class FurAffinityBridge extends BridgeAbstract
     private function getFASimpleHTMLDOM($url, $cache = false)
     {
         $header = [
-                'Cookie: ' . self::FA_AUTH_COOKIE
+                'Cookie: ' . $this->FA_AUTH_COOKIE
             ];
 
         if ($cache) {
