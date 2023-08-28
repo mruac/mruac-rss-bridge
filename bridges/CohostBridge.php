@@ -4,10 +4,9 @@ class CohostBridge extends BridgeAbstract
 {
     const NAME = 'Cohost Bridge';
     const URI = 'https://cohost.org';
-    const DESCRIPTION = 'User pages from Cohost.org';
+    const DESCRIPTION = 'User pages from Cohost.org<br>If a user is inaccessible from public view, please set the cookie.';
     const MAINTAINER = 'mruac';
-    const CACHE_TIMEOUT = 1800;
-    //30 mins
+    const CACHE_TIMEOUT = 1800; //30 mins
     const PARAMETERS = [
         'User page' => [
             'page_name' => [
@@ -18,6 +17,13 @@ class CohostBridge extends BridgeAbstract
             ]
         ]
     ];
+    const CONFIGURATION = [
+        'cookie' => [
+            'required' => false
+        ]
+    ];
+
+
     public function getName()
     {
         switch ($this->queriedContext) {
@@ -33,21 +39,17 @@ class CohostBridge extends BridgeAbstract
     {
         /*
       Cohost already has RSS feeds for individual users, however it has the following caveats:
-           - [] RSS feeds are unavailable for private users (users who must be logged in to view) (privacy)
+           - [] RSS feeds are unavailable for private or non-public (account-only) users (users who must be following or logged in to view) (privacy)
            - [] No feed of a user's timeline (personal)
            - [x] Asks are not included in a feed item. (Truncated) //TESTME:
            - [X] Previous posts in a repost are not included (truncated) //TESTME:
         */
-        $data = getSimpleHTMLDOMCached(self::URI . "/{$this->getInput('page_name')}");
-        $data = $data->find('#trpc-dehydrated-state', 0);
-        $data = $data ? json_decode($data->innertext, true) : null;
-        $data = $data ? array_reduce($data['queries'], function ($acc, $v) {
-            if (str_contains($v['queryHash'], '["posts","profilePosts"]')) {
-                return $acc[] = $v;
-            }
-        }, []) : null;
-        $posts = sizeof($data) > 0 ? $data['state']['data']['posts'] : null;
-        if ($posts !== null) {
+        $handle = strtolower($this->getInput('page_name'));
+        $query_str = '{"options":{"hideAsks":false,"hideReplies":false,"hideShares":false},"page":0,"projectHandle":"' . $handle . '"}';
+        $posts = $this->getData(self::URI . "/api/v1/trpc/posts.profilePosts?input={rawurlencode($query_str}", true)
+            or returnServerError($handle . ' could not be found.');
+        $posts = $posts ? $posts['result']['data']['posts'] : null;
+        if ($posts) {
             foreach ($posts as $post) {
                 //skip pinned post
                 if ($post['pinned']) {
@@ -66,6 +68,7 @@ class CohostBridge extends BridgeAbstract
                 }
                 $post_data = $this->parsePost($post);
                 $content .= $post_data['content'];
+
                 $item['uri'] = $post['singlePostPageUrl'];
                 $item['title'] = "@{$post['postingProject']['handle']} {$post_type}ed";
                 $item['timestamp'] = $post['publishedAt'];
@@ -77,6 +80,8 @@ class CohostBridge extends BridgeAbstract
                 $item['uid'] = $post['filename'];
                 $this->items[] = $item;
             }
+        } else {
+            returnServerError($handle . '\'s data could not be found. Please check the name and try again later.');
         }
     }
 
@@ -134,18 +139,70 @@ class CohostBridge extends BridgeAbstract
 
         //tags
         foreach ($post['tags'] as $tag) {
-            $post_tags .= "<a href=\"{self::URI}/{$post['postingProject']['handle']}/tagged/{$tag}\">$tag</a> ";
+            $post_tags .= '<a href="' . self::URI . "/{$post['postingProject']['handle']}/tagged/{$tag}\">$tag</a> ";
         }
         if (strlen($post_tags) > 0) {
             $post_tags = "<p>🏷 Tag(s): {$post_tags}</p>";
         }
 
-        //assemble: page name, CWs, title, attachments, body.
+        //assemble: page name, CWs, title, attachments, body, tags.
         $post_title = strlen($post['headline']) > 0 ? "<h1>{$post['headline']}</h1>" : '';
         $post_contents = strlen($post['plainTextBody']) > 0 ? "{$ask_str}<p>{$post['plainTextBody']}</p>" : '';
         $post_type = is_null($post['responseToAskId']) ? 'posted' : 'answered';
         $post_header = "<p><b>{$post['postingProject']['displayName']}</b> @{$post['postingProject']['handle']}> {$post_type}:</p>";
         $content = $post_header . $cw_string . $post_title . $attach_str . $post_contents . $post_tags;
         return ['content' => $content, 'enclosures' => $enclosures];
+    }
+
+
+    private function checkCookie(array $headers)
+    {
+        if (array_key_exists('set-cookie', $headers)) {
+            foreach ($headers['set-cookie'] as $value) {
+                if (str_starts_with($value, 'connect.sid=')) {
+                    parse_str(strtr($value, ['&' => '%26', '+' => '%2B', ';' => '&']), $cookie);
+                    if ($cookie['connect.sid'] != $this->getCookie()) {
+                        $this->saveCacheValue('cookie', $cookie['connect.sid']);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private function getCookie()
+    {
+        // checks if cookie is set, if not initialise it with the cookie from the config
+        $value = $this->loadCacheValue('cookie', 691200 /* 7 days + 1 day to let cookie chance to renew */);
+        if (!isset($value)) {
+            $value = $this->saveCacheValue('cookie', $this->getOption('cookie'));
+        }
+        return $value;
+    }
+
+    private function getData(string $url, bool $cache = false, bool $getJSON = true, array $httpHeaders = [], array $curlOptions = [])
+    {
+        $cookie_str = $this->getCookie();
+        if ($cookie_str) {
+            $curlOptions[CURLOPT_COOKIE] = 'connect.sid=' . $cookie_str;
+        }
+
+        if ($cache) {
+            $data = $this->loadCacheValue($url, 86400); // 24 hours
+            if (!$data) {
+                $data = getContents($url, $httpHeaders, $curlOptions, true) or returnServerError("Could not load $url");
+                $this->saveCacheValue($url, $data);
+            }
+        } else {
+            $data = getContents($url, $httpHeaders, $curlOptions, true) or returnServerError("Could not load $url");
+        }
+
+        $this->checkCookie($data['headers']);
+
+        if ($getJSON) {
+            return json_decode($data['content'], true);
+        } else {
+            return str_get_html($data['content']);
+        }
     }
 }
