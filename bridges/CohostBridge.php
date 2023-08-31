@@ -23,6 +23,16 @@ class CohostBridge extends BridgeAbstract
         ]
     ];
 
+    public function getURI()
+    {
+        switch ($this->queriedContext) {
+            case 'User page':
+                return self::URI . '/' . strtolower($this->getInput('page_name'));
+            default:
+                return self::URI;
+        }
+    }
+
 
     public function getName()
     {
@@ -39,14 +49,14 @@ class CohostBridge extends BridgeAbstract
     {
         /*
       Cohost already has RSS feeds for individual users, however it has the following caveats:
-           - [] RSS feeds are unavailable for private or non-public (account-only) users (users who must be following or logged in to view) (privacy)
+           - [X] RSS feeds are unavailable for private or non-public (account-only) users (users who must be following or logged in to view) (privacy)
            - [] No feed of a user's timeline (personal)
            - [x] Asks are not included in a feed item. (Truncated) //TESTME:
            - [X] Previous posts in a repost are not included (truncated) //TESTME:
         */
         $handle = strtolower($this->getInput('page_name'));
-        $query_str = '{"options":{"hideAsks":false,"hideReplies":false,"hideShares":false},"page":0,"projectHandle":"' . $handle . '"}';
-        $posts = $this->getData(self::URI . "/api/v1/trpc/posts.profilePosts?input={rawurlencode($query_str}", true)
+        $query_str = rawurlencode('{"options":{"hideAsks":false,"hideReplies":false,"hideShares":false},"page":0,"projectHandle":"' . $handle . '"}');
+        $posts = $this->getData(self::URI . "/api/v1/trpc/posts.profilePosts?input={$query_str}", true)
             or returnServerError($handle . ' could not be found.');
         $posts = $posts ? $posts['result']['data']['posts'] : null;
         if ($posts) {
@@ -59,18 +69,20 @@ class CohostBridge extends BridgeAbstract
                 $item = [];
                 $content = '';
                 $post_type = is_null($post['responseToAskId']) ? 'post' : 'answer';
+                $post_type_title = is_null($post['responseToAskId']) ? 'posted' : 'answered';
                 if (sizeof($post['shareTree']) > 0) {
-                    $post_type = 'repost';
+                    $post_type = 'share';
+                    $post_type_title = 'shared';
                     foreach ($post['shareTree'] as $share_post) {
-                        $content .= $this->parsePost($share_post)['content'];
-                        $content .= '<hr><hr>';
+                        $content .= $this->parsePost($share_post, true)['content'];
                     }
                 }
+                $post_type_title .= ($post_type === 'share') ? " from @{$post['shareTree'][(sizeof($post['shareTree']) - 1)]['postingProject']['handle']}" : '';
                 $post_data = $this->parsePost($post);
                 $content .= $post_data['content'];
 
                 $item['uri'] = $post['singlePostPageUrl'];
-                $item['title'] = "@{$post['postingProject']['handle']} {$post_type}ed";
+                $item['title'] = "@{$post['postingProject']['handle']} {$post_type_title}";
                 $item['timestamp'] = $post['publishedAt'];
                 $item['author'] = $post['postingProject']['handle'];
                 $item['content'] = $content;
@@ -85,12 +97,16 @@ class CohostBridge extends BridgeAbstract
         }
     }
 
-    private function parsePost(array $post)
+    private function parsePost(array $post, bool $isShare = false)
     {
+
         $cw_string = '';
         $attach_str = '';
         $ask_str = '';
         $post_tags = '';
+        $content = '';
+        $enclosures = [];
+
         //content warnings
         if ($post['effectiveAdultContent']) {
             $cw_string .= '18+';
@@ -115,8 +131,8 @@ class CohostBridge extends BridgeAbstract
                         $block = $block[$block['type']];
                         switch ($block['kind']) {
                             case 'image':
-                                $alt_text = strlen($block['altText']) > 0 ? "<figcaption>{$block['altText']}</figcaption>" : '';
-                                $attach_str .= "<figure><img src=\"{$block['fileURL']}\">{$alt_text}</figure>";
+                                $alt_text = $block['altText'] ?? '';
+                                $attach_str .= "<figure><img src=\"{$block['fileURL']}\"><figcaption>{$alt_text}</figcaption></figure><br>";
                                 $enclosures[] = $block['fileURL'];
                                 break;
                             case 'audio':
@@ -124,14 +140,14 @@ class CohostBridge extends BridgeAbstract
                                 $title = strlen($block['artist']) > 0 ? "{$title} by {$block['artist']}" : $title;
                                 $alt_text = strlen($title) > 0 ? "<figcaption>{$title}</figcaption>" : '';
                                 $attach_str .= "<figure>{$alt_text}<audio controls src=\"{$block['fileURL']}\"><a href=\"{$block['fileURL']}\">";
-                                $attach_str .= "Download audio: {$title} </a></audio></figure>";
+                                $attach_str .= "Download audio: {$title} </a></audio></figure><br>";
                                 $enclosures[] = $block['fileURL'];
                                 break;
                         }
-
                         break;
                     case 'ask':
-                        $ask_user = $block['anon'] ? 'Anonymous' : "@{$block['askingProject']['handle']}";
+                        $block = $block[$block['type']];
+                        $ask_user = $block['anon'] ? 'Anonymous' : "<i>@{$block['askingProject']['handle']}</i>";
                         $ask_str = "<figure><figcaption><b>{$ask_user} asked:</b></figcaption><blockquote>{$block['content']}</blockquote></figure>";
                 }
             }
@@ -139,19 +155,60 @@ class CohostBridge extends BridgeAbstract
 
         //tags
         foreach ($post['tags'] as $tag) {
-            $post_tags .= '<a href="' . self::URI . "/{$post['postingProject']['handle']}/tagged/{$tag}\">$tag</a> ";
+            $post_tags .= '<a href="' . self::URI . "/{$post['postingProject']['handle']}/tagged/{$tag}\">#{$tag}</a> ";
         }
         if (strlen($post_tags) > 0) {
             $post_tags = "<p>🏷 Tag(s): {$post_tags}</p>";
         }
 
-        //assemble: page name, CWs, title, attachments, body, tags.
-        $post_title = strlen($post['headline']) > 0 ? "<h1>{$post['headline']}</h1>" : '';
-        $post_contents = strlen($post['plainTextBody']) > 0 ? "{$ask_str}<p>{$post['plainTextBody']}</p>" : '';
+        //assemble: page name, CWs, title, attachments, body, tags, repost divider.
         $post_type = is_null($post['responseToAskId']) ? 'posted' : 'answered';
-        $post_header = "<p><b>{$post['postingProject']['displayName']}</b> @{$post['postingProject']['handle']}> {$post_type}:</p>";
-        $content = $post_header . $cw_string . $post_title . $attach_str . $post_contents . $post_tags;
+        $post_header = "<p><b>{$post['postingProject']['displayName']}</b> <i>@{$post['postingProject']['handle']}</i> {$post_type}:</p>";
+        $post_title = strlen($post['headline']) > 0 ? "<h1><b>{$post['headline']}</b></h1>" : '';
+
+        $plainTextBody = $post['plainTextBody'];
+        if (strlen($plainTextBody) > 0) {
+            //remove whitespace before html tags to prevent them being parsed as markdown code blocks.
+            //poster should use fenced codeblocks to indicate markdown code instead of prepending with whitespace
+            //https://cohost.org/a2aaron/post/77004-announcing-cohoard
+            //$plainTextBody = preg_replace('/^\s+(<\/?\w+)/m', '$1', $plainTextBody);
+
+            //posts can use a mixture of markdown and html
+            //https://cohost.org/ohnoproblems/post/2660150-touhou-grotto
+            $plainTextBody = markdownToHtml($plainTextBody, [
+                'breaksEnabled' => true,
+                'markupEscaped' => false,
+                'urlsLinked' => true
+            ]);
+            $plainTextBody = $this->extractAltText(str_get_html($plainTextBody));
+        }
+        $post_contents = $ask_str . $plainTextBody;
+        $repost_divider = $isShare ? '<hr><hr>' : '';
+        $body = $cw_string . $post_title . $attach_str . $post_contents . $post_tags;
+
+        //TODO: Be more verbose for each case. Currently found: "log-in-first"
+        if (strlen($body) === 0 && $post['limitedVisibilityReason'] !== 'none') {
+            $body = '🛈 This post is visible only to users who are logged in.';
+        }
+        $content = $post_header . $body . $repost_divider;
+
+        //remove $content if repost has no content. This prevents showing the long share tree in feed item.
+        if (strlen($body) === 0) {
+            $content = '';
+        }
         return ['content' => $content, 'enclosures' => $enclosures];
+    }
+
+    private function extractAltText(simple_html_dom $html)
+    {
+        $imgs = $html->find('img');
+        foreach ($imgs as $img) {
+            $src = $img->getAttribute('src') ?? '';
+            $altText = $img->getAttribute('alt') ?? '';
+            $img->outertext = "<figure><img src=\"{$src}\"><figcaption>{$altText}</figcaption></figure>";
+        }
+
+        return $html;
     }
 
 
@@ -161,8 +218,8 @@ class CohostBridge extends BridgeAbstract
             foreach ($headers['set-cookie'] as $value) {
                 if (str_starts_with($value, 'connect.sid=')) {
                     parse_str(strtr($value, ['&' => '%26', '+' => '%2B', ';' => '&']), $cookie);
-                    if ($cookie['connect.sid'] != $this->getCookie()) {
-                        $this->saveCacheValue('cookie', $cookie['connect.sid']);
+                    if ($cookie['connect_sid'] != $this->getCookie()) {
+                        $this->saveCacheValue('cookie', $cookie['connect_sid']);
                     }
                     break;
                 }
@@ -175,7 +232,8 @@ class CohostBridge extends BridgeAbstract
         // checks if cookie is set, if not initialise it with the cookie from the config
         $value = $this->loadCacheValue('cookie', 691200 /* 7 days + 1 day to let cookie chance to renew */);
         if (!isset($value)) {
-            $value = $this->saveCacheValue('cookie', $this->getOption('cookie'));
+            $value = $this->getOption('cookie');
+            $this->saveCacheValue('cookie', $this->getOption('cookie'));
         }
         return $value;
     }
