@@ -99,7 +99,6 @@ class CohostBridge extends BridgeAbstract
 
     private function parsePost(array $post, bool $isShare = false)
     {
-
         $cw_string = '';
         $attach_str = '';
         $ask_str = '';
