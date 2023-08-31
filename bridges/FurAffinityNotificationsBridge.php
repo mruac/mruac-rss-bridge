@@ -594,7 +594,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             $item['content'] .= $this->formatComment($html->find('.submission-description', 0)); // Content in HTML format
             $item['content'] .= '<hr/><b>Tags:</b><br/>';
             foreach ($html->find('.section-body .tags a') as $tag) {
-                $item['content'] .= "{$tag->outertext}<br/>";
+                $item['content'] .= "{$tag->outertext} ";
             }
         }
 
