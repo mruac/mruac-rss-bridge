@@ -6,7 +6,7 @@ class CohostBridge extends BridgeAbstract
     const URI = 'https://cohost.org';
     const DESCRIPTION = 'User pages from Cohost.org<br>If a user is inaccessible from public view, please set the cookie.';
     const MAINTAINER = 'mruac';
-    const CACHE_TIMEOUT = 1800; //30 mins
+    const CACHE_TIMEOUT = 0; //30 mins
     const PARAMETERS = [
         'User page' => [
             'page_name' => [
