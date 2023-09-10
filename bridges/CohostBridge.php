@@ -6,7 +6,7 @@ class CohostBridge extends BridgeAbstract
     const URI = 'https://cohost.org';
     const DESCRIPTION = 'User pages from Cohost.org<br>If a user is inaccessible from public view, please set the cookie.';
     const MAINTAINER = 'mruac';
-    const CACHE_TIMEOUT = 1800; //30 mins
+    const CACHE_TIMEOUT = 0; //30 mins
     const PARAMETERS = [
         'User page' => [
             'page_name' => [
@@ -170,7 +170,9 @@ class CohostBridge extends BridgeAbstract
                 'markupEscaped' => false,
                 'urlsLinked' => true
             ]);
-            $plainTextBody = $this->extractAltText(str_get_html($plainTextBody));
+            if (strlen($plainTextBody) > 0) {
+                $plainTextBody = $this->extractAltText(str_get_html($plainTextBody));
+            }
         }
         $post_contents = $ask_str . $plainTextBody;
         $repost_divider = $isShare ? '<hr><hr>' : '';
