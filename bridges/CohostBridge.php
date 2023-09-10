@@ -47,13 +47,6 @@ class CohostBridge extends BridgeAbstract
 
     public function collectData()
     {
-        /*
-      Cohost already has RSS feeds for individual users, however it has the following caveats:
-           - [X] RSS feeds are unavailable for private or non-public (account-only) users (users who must be following or logged in to view) (privacy)
-           - [] No feed of a user's timeline (personal)
-           - [x] Asks are not included in a feed item. (Truncated) //TESTME:
-           - [X] Previous posts in a repost are not included (truncated) //TESTME:
-        */
         $handle = strtolower($this->getInput('page_name'));
         $query_str = rawurlencode('{"options":{"hideAsks":false,"hideReplies":false,"hideShares":false},"page":0,"projectHandle":"' . $handle . '"}');
         $posts = $this->getData(self::URI . "/api/v1/trpc/posts.profilePosts?input={$query_str}", true)
@@ -92,8 +85,6 @@ class CohostBridge extends BridgeAbstract
                 $item['uid'] = $post['filename'];
                 $this->items[] = $item;
             }
-        } else {
-            returnServerError($handle . '\'s data could not be found. Please check the name and try again later.');
         }
     }
 
@@ -245,7 +236,7 @@ class CohostBridge extends BridgeAbstract
         }
 
         if ($cache) {
-            $data = $this->loadCacheValue($url, 86400); // 24 hours
+            $data = $this->loadCacheValue($url, self::CACHE_TIMEOUT);
             if (!$data) {
                 $data = getContents($url, $httpHeaders, $curlOptions, true) or returnServerError("Could not load $url");
                 $this->saveCacheValue($url, $data);
