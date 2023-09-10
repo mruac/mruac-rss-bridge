@@ -170,7 +170,9 @@ class CohostBridge extends BridgeAbstract
                 'markupEscaped' => false,
                 'urlsLinked' => true
             ]);
-            $plainTextBody = $this->extractAltText(str_get_html($plainTextBody));
+            if (strlen($plainTextBody) > 0) {
+                $plainTextBody = $this->extractAltText(str_get_html($plainTextBody));
+            }
         }
         $post_contents = $ask_str . $plainTextBody;
         $repost_divider = $isShare ? '<hr><hr>' : '';
