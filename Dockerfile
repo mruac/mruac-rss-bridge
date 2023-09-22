@@ -4,8 +4,10 @@ LABEL description="RSS-Bridge is a PHP project capable of generating RSS and Ato
 LABEL repository="https://github.com/RSS-Bridge/rss-bridge"
 LABEL website="https://github.com/RSS-Bridge/rss-bridge"
 
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install --yes --no-install-recommends \
+      ca-certificates \
       nginx \
       zlib1g-dev \
       libzip-dev \

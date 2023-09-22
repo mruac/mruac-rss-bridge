@@ -75,6 +75,22 @@ class RedditBridge extends BridgeAbstract
 
     public function collectData()
     {
+        $cacheKey = 'reddit_rate_limit';
+        if ($this->cache->get($cacheKey)) {
+            throw new HttpException('429 Too Many Requests', 429);
+        }
+        try {
+            $this->collectDataInternal();
+        } catch (HttpException $e) {
+            if ($e->getCode() === 429) {
+                $this->cache->set($cacheKey, true, 60 * 16);
+            }
+            throw $e;
+        }
+    }
+
+    private function collectDataInternal(): void
+    {
         $user = false;
         $comments = false;
         $section = $this->getInput('d');

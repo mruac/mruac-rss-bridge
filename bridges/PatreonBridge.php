@@ -133,8 +133,8 @@ class PatreonBridge extends BridgeAbstract
                         }
                     }
                     $thumbnail = $post->attributes->thumbnail->large ?? null;
-                    $thumbnail = $thumbnail ?? $post->attributes->thumbnail->url;
-                    $thumbnail = $thumbnail ?? $post->attributes->image->thumb_url;
+                    $thumbnail = $thumbnail ?? $post->attributes->thumbnail->url ?? null;
+                    $thumbnail = $thumbnail ?? $post->attributes->image->thumb_url ?? null;
                     $thumbnail = $thumbnail ?? $post->attributes->image->url;
                     $audio_filename = $audio->file_name ?? $item['title'];
                     $download_url = $audio->download_url ?? $item['uri'];
@@ -148,16 +148,16 @@ class PatreonBridge extends BridgeAbstract
 
                 case 'video_embed':
                     $thumbnail = $post->attributes->thumbnail->large ?? null;
-                    $thumbnail = $thumbnail ?? $post->attributes->thumbnail->url;
-                    $thumbnail = $thumbnail ?? $post->attributes->image->thumb_url;
+                    $thumbnail = $thumbnail ?? $post->attributes->thumbnail->url ?? null;
+                    $thumbnail = $thumbnail ?? $post->attributes->image->thumb_url ?? null;
                     $thumbnail = $thumbnail ?? $post->attributes->image->url;
                     $item['content'] .= "<p><a href=\"{$item['uri']}\">🎬 {$item['title']}<br><img src=\"{$thumbnail}\"></a></p>";
                     break;
 
                 case 'video_external_file':
                     $thumbnail = $post->attributes->thumbnail->large ?? null;
-                    $thumbnail = $thumbnail ?? $post->attributes->thumbnail->url;
-                    $thumbnail = $thumbnail ?? $post->attributes->image->thumb_url;
+                    $thumbnail = $thumbnail ?? $post->attributes->thumbnail->url ?? null;
+                    $thumbnail = $thumbnail ?? $post->attributes->image->thumb_url ?? null;
                     $thumbnail = $thumbnail ?? $post->attributes->image->url;
                     $item['content'] .= "<p><a href=\"{$item['uri']}\">🎬 {$item['title']}<br><img src=\"{$thumbnail}\"></a></p>";
                     break;

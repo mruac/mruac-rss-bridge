@@ -39,10 +39,11 @@ const MAX_FILE_SIZE = 10000000;
 // Files
 $files = [
     __DIR__ . '/../lib/html.php',
-    __DIR__ . '/../lib/error.php',
     __DIR__ . '/../lib/contents.php',
     __DIR__ . '/../lib/php8backports.php',
     __DIR__ . '/../lib/utils.php',
+    __DIR__ . '/../lib/http.php',
+    __DIR__ . '/../lib/logger.php',
     // Vendor
     __DIR__ . '/../vendor/parsedown/Parsedown.php',
     __DIR__ . '/../vendor/php-urljoin/src/urljoin.php',
