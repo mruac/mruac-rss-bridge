@@ -96,6 +96,9 @@ EOD;
             throw new \Exception(sprintf('Unable to find channel `%s`', $channel));
         }
         $user = $data->user;
+        if ($user->videos === null) {
+            throw new HttpException('Service Unavailable', 503);
+        }
         foreach ($user->videos->edges as $edge) {
             $video = $edge->node;
 
@@ -154,9 +157,11 @@ EOD;
 
             // Add played games list to content
             $item['content'] .= '<p><b>Played games:</b><ul>';
-            if (count($video->moments->edges) > 0) {
-                foreach ($video->moments->edges as $edge) {
-                    $moment = $edge->node;
+
+            $momentEdges = $video->moments->edges ?? [];
+            if (count($momentEdges) > 0) {
+                foreach ($momentEdges as $momentEdge) {
+                    $moment = $momentEdge->node;
 
                     $item['categories'][] = $moment->description;
                     $item['content'] .= '<li><a href="'

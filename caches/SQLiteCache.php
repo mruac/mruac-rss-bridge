@@ -37,10 +37,14 @@ class SQLiteCache implements CacheInterface
             $this->db = new \SQLite3($config['file']);
             $this->db->enableExceptions(true);
             $this->db->exec("CREATE TABLE storage ('key' BLOB PRIMARY KEY, 'value' BLOB, 'updated' INTEGER)");
+            // Consider uncommenting this to add an index on expiration
+            //$this->db->exec('CREATE INDEX idx_storage_updated ON storage (updated)');
         }
         $this->db->busyTimeout($config['timeout']);
+
         // https://www.sqlite.org/pragma.html#pragma_journal_mode
         $this->db->exec('PRAGMA journal_mode = wal');
+
         // https://www.sqlite.org/pragma.html#pragma_synchronous
         $this->db->exec('PRAGMA synchronous = NORMAL');
     }
@@ -82,8 +86,13 @@ class SQLiteCache implements CacheInterface
         $stmt->bindValue(':key', $cacheKey);
         $stmt->bindValue(':value', $blob, \SQLITE3_BLOB);
         $stmt->bindValue(':updated', $expiration);
-        $result = $stmt->execute();
-        // Unclear whether we should $result->finalize(); here?
+        try {
+            $result = $stmt->execute();
+            // Should $result->finalize() be called here?
+        } catch (\Exception $e) {
+            $this->logger->warning(create_sane_exception_message($e));
+            // Intentionally not rethrowing exception
+        }
     }
 
     public function delete(string $key): void

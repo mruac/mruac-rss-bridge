@@ -1,25 +1,13 @@
 <?php
 
 /**
- * This file is part of RSS-Bridge, a PHP project capable of generating RSS and
- * Atom feeds for websites that don't have one.
- *
- * For the full license information, please view the UNLICENSE file distributed
- * with this source code.
- *
- * @package Core
- * @license http://unlicense.org/ UNLICENSE
- * @link    https://github.com/rss-bridge/rss-bridge
- */
-
-/**
  * Configuration module for RSS-Bridge.
  *
  * This class implements a configuration module for RSS-Bridge.
  */
 final class Configuration
 {
-    private const VERSION = 'dev.2023-07-11';
+    private const VERSION = '2023-09-24';
 
     private static $config = [];
 

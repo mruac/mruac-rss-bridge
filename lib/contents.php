@@ -15,6 +15,7 @@ function getContents(
     bool $returnFull = false
 ) {
     $httpClient = RssBridge::getHttpClient();
+    $cache = RssBridge::getCache();
 
     $httpHeadersNormalized = [];
     foreach ($httpHeaders as $httpHeader) {
@@ -51,8 +52,11 @@ function getContents(
         $config['proxy'] = Configuration::getConfig('proxy', 'url');
     }
 
-    $cache = RssBridge::getCache();
-    $cacheKey = 'server_' . $url;
+    $requestBodyHash = null;
+    if (isset($curlOptions[CURLOPT_POSTFIELDS])) {
+        $requestBodyHash = md5(Json::encode($curlOptions[CURLOPT_POSTFIELDS], false));
+    }
+    $cacheKey = implode('_', ['server',  $url, $requestBodyHash]);
 
     /** @var Response $cachedResponse */
     $cachedResponse = $cache->get($cacheKey);
@@ -154,13 +158,12 @@ function getSimpleHTMLDOM(
     $defaultBRText = DEFAULT_BR_TEXT,
     $defaultSpanText = DEFAULT_SPAN_TEXT
 ) {
-    $content = getContents(
-        $url,
-        $header ?? [],
-        $opts ?? []
-    );
+    $html = getContents($url, $header ?? [], $opts ?? []);
+    if ($html === '') {
+        throw new \Exception('Unable to parse dom because the http response was the empty string');
+    }
     return str_get_html(
-        $content,
+        $html,
         $lowercase,
         $forceTagsClosed,
         $target_charset,

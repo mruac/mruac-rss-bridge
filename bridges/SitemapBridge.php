@@ -53,31 +53,41 @@ class SitemapBridge extends CssSelectorBridge
                     EOT,
                 'exampleValue' => 'https://example.com/sitemap.xml',
             ],
+            'discard_thumbnail' => [
+                'name' => '[Optional] Discard thumbnail set by site author',
+                'title' => 'Some sites set their logo as thumbnail for every article. Use this option to discard it.',
+                'type' => 'checkbox',
+            ],
             'limit' => self::LIMIT
         ]
     ];
 
     public function collectData()
     {
-        $url = $this->getInput('home_page');
+        $this->homepageUrl = $this->getInput('home_page');
         $url_pattern = $this->getInput('url_pattern');
         $content_selector = $this->getInput('content_selector');
         $content_cleanup = $this->getInput('content_cleanup');
         $title_cleanup = $this->getInput('title_cleanup');
         $site_map = $this->getInput('site_map');
+        $discard_thumbnail = $this->getInput('discard_thumbnail');
         $limit = $this->getInput('limit');
 
-        $this->feedName = $this->getPageTitle($url, $title_cleanup);
-        $sitemap_url = empty($site_map) ? $url : $site_map;
+        $this->feedName = $this->titleCleanup($this->getPageTitle($this->homepageUrl), $title_cleanup);
+        $sitemap_url = empty($site_map) ? $this->homepageUrl : $site_map;
         $sitemap_xml = $this->getSitemapXml($sitemap_url, !empty($site_map));
         $links = $this->sitemapXmlToList($sitemap_xml, $url_pattern, empty($limit) ? 10 : $limit);
 
-        if (empty($links) && empty(sitemapXmlToList($sitemap_xml))) {
+        if (empty($links) && empty($this->sitemapXmlToList($sitemap_xml))) {
             returnClientError('Could not retrieve URLs with Timestamps from Sitemap: ' . $sitemap_url);
         }
 
         foreach ($links as $link) {
-            $this->items[] = $this->expandEntryWithSelector($link, $content_selector, $content_cleanup, $title_cleanup);
+            $item = $this->expandEntryWithSelector($link, $content_selector, $content_cleanup, $title_cleanup);
+            if ($discard_thumbnail && isset($item['enclosures'])) {
+                unset($item['enclosures']);
+            }
+            $this->items[] = $item;
         }
     }
 
@@ -93,7 +103,13 @@ class SitemapBridge extends CssSelectorBridge
             $robots_txt = getSimpleHTMLDOM(urljoin($url, '/robots.txt'))->outertext;
             preg_match('/Sitemap: ([^ ]+)/', $robots_txt, $matches);
             if (empty($matches)) {
-                returnClientError('Failed to determine Sitemap from robots.txt. Try setting it manually.');
+                $sitemap = getSimpleHTMLDOM(urljoin($url, '/sitemap.xml'));
+                if (!empty($sitemap->find('urlset, sitemap'))) {
+                    $url = urljoin($url, '/sitemap.xml');
+                    return $sitemap;
+                } else {
+                    returnClientError('Failed to locate Sitemap from /robots.txt or /sitemap.xml. Try setting it manually.');
+                }
             }
             $url = $matches[1];
         }

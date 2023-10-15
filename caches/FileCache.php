@@ -30,13 +30,14 @@ class FileCache implements CacheInterface
         if (!file_exists($cacheFile)) {
             return $default;
         }
-        $item = unserialize(file_get_contents($cacheFile));
+        $data = file_get_contents($cacheFile);
+        $item = unserialize($data);
         if ($item === false) {
             $this->logger->warning(sprintf('Failed to unserialize: %s', $cacheFile));
             $this->delete($key);
             return $default;
         }
-        $expiration = $item['expiration'];
+        $expiration = $item['expiration'] ?? time();
         if ($expiration === 0 || $expiration > time()) {
             return $item['value'];
         }
@@ -87,12 +88,13 @@ class FileCache implements CacheInterface
             if (isset($excluded[$filename]) || !is_file($cacheFile)) {
                 continue;
             }
-            $item = unserialize(file_get_contents($cacheFile));
+            $data = file_get_contents($cacheFile);
+            $item = unserialize($data);
             if ($item === false) {
                 unlink($cacheFile);
                 continue;
             }
-            $expiration = $item['expiration'];
+            $expiration = $item['expiration'] ?? time();
             if ($expiration === 0 || $expiration > time()) {
                 continue;
             }
