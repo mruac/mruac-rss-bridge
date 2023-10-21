@@ -127,7 +127,7 @@ class CohostBridge extends BridgeAbstract
                                 break;
                             case 'audio':
                                 $title = $block['title'];
-                                $title = strlen($block['artist']) > 0 ? "{$title} by {$block['artist']}" : $title;
+                                $title = strlen(trim($block['artist'])) > 0 ? "{$title} by {$block['artist']}" : $title;
                                 $alt_text = strlen($title) > 0 ? "<figcaption>{$title}</figcaption>" : '';
                                 $attach_str .= "<figure>{$alt_text}<audio controls src=\"{$block['fileURL']}\"><a href=\"{$block['fileURL']}\">";
                                 $attach_str .= "Download audio: {$title} </a></audio></figure><br>";
@@ -153,7 +153,7 @@ class CohostBridge extends BridgeAbstract
 
         //assemble: page name, CWs, title, attachments, body, tags, repost divider.
         $post_type = is_null($post['responseToAskId']) ? 'posted' : 'answered';
-        $post_header = "<p><b>{$post['postingProject']['displayName']}</b> <i>@{$post['postingProject']['handle']}</i> {$post_type}:</p>";
+        $post_header = "<p><b>{$post['postingProject']['displayName']}</b> <i>@{$post['postingProject']['handle']}</i> <a href=\"{$post['singlePostPageUrl']}\">{$post_type}</a>:</p>";
         $post_title = strlen($post['headline']) > 0 ? "<h1><b>{$post['headline']}</b></h1>" : '';
 
         $plainTextBody = $post['plainTextBody'];

@@ -570,7 +570,7 @@ class InkbunnyUserBridge extends BridgeAbstract
         return $sid;
     }
 
-    public function getParameters()
+    public function getParameters(): array
     {
         //removes user options if not logged in and authenticated (eg. guest)
         $arr = static::PARAMETERS;
