@@ -22,6 +22,7 @@ Configuration::loadConfiguration($customConfig, getenv());
 // Consider: ini_set('error_reporting', E_ALL & ~E_DEPRECATED);
 date_default_timezone_set(Configuration::getConfig('system', 'timezone'));
 
+$rssBridge = new RssBridge();
 
 set_exception_handler(function (\Throwable $e) {
     http_response_code(500);
