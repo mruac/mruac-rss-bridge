@@ -17,7 +17,13 @@ RUN apt-get update && \
     docker-php-ext-install intl && \
     mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-COPY ./config/nginx.conf /etc/nginx/sites-enabled/default
+# logs should go to stdout / stderr
+RUN ln -sfT /dev/stderr /var/log/nginx/error.log; \
+	ln -sfT /dev/stdout /var/log/nginx/access.log; \
+	chown -R --no-dereference www-data:adm /var/log/nginx/
+COPY ./config/nginx.conf /etc/nginx/sites-available/default
+COPY ./config/php-fpm.conf /etc/php/8.2/fpm/pool.d/rss-bridge.conf
+COPY ./config/php.ini /etc/php/8.2/fpm/conf.d/90-rss-bridge.ini
 
 COPY --chown=www-data:www-data ./ /app/
 
