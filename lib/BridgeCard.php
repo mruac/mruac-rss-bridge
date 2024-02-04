@@ -47,7 +47,7 @@ final class BridgeCard
 
         CARD;
 
-        $token = $request->attribute('token');
+        $token = $request->attribute('__key');
 
         if (count($contexts) === 0) {
             // The bridge has zero parameters
@@ -106,7 +106,7 @@ final class BridgeCard
 
         if ($token) {
             // todo: maybe escape the token?
-            $form .= sprintf('<input type="hidden" name="token" value="%s" />', $token);
+            $form .= sprintf('<input type="hidden" name="__key" value="%s" />', $token);
         }
 
         if (!empty($contextName)) {

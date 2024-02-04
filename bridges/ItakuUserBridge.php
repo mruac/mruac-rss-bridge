@@ -160,7 +160,7 @@ class ItakuUserBridge extends BridgeAbstract
                 'rating_e' => $this->getInput('rating_e')
             ];
 
-            $data = $this->getFeed($opt);
+            $data = $this->getItakuFeed($opt);
 
             foreach ($data['results'] as $record) {
                 switch ($record['content_type']) {
@@ -686,7 +686,7 @@ class ItakuUserBridge extends BridgeAbstract
         ];
     }
 
-    private function getFeed(array $opt)
+    private function getItakuFeed(array $opt)
     {
         $url = self::URI . "/api/feed/?date_range={$opt['range']}&ordering={$opt['order']}&page=1";
         $url .= '&page_size=30&format=json&visibility=PUBLIC&visibility=PROFILE_ONLY&by_following=true';

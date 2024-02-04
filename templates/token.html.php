@@ -15,6 +15,6 @@
 
 <form action="" method="get">
     <label for="token">Token:</label>
-    <input type="password" name="token" id="token" placeholder="token">
+    <input type="password" name="__key" id="token" placeholder="token">
     <input type="submit" value="OK">
 </form>

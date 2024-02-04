@@ -73,16 +73,16 @@ final class RssBridge
         }
 
         // Add token as attribute to request
-        $request = $request->withAttribute('token', $request->get('token'));
+        $request = $request->withAttribute('__key', $request->get('__key'));
 
         // Token authentication check
         if (Configuration::getConfig('authentication', 'token')) {
-            if (! $request->attribute('token')) {
+            if (! $request->attribute('__key')) {
                 return new Response(render(__DIR__ . '/../templates/token.html.php', [
                     'message' => '',
                 ]), 401);
             }
-            if (! hash_equals(Configuration::getConfig('authentication', 'token'), $request->attribute('token'))) {
+            if (! hash_equals(Configuration::getConfig('authentication', 'token'), $request->attribute('__key'))) {
                 return new Response(render(__DIR__ . '/../templates/token.html.php', [
                     'message' => 'Invalid token',
                 ]), 401);
