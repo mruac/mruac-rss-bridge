@@ -33,7 +33,7 @@ class CohostArtistAlleyBridge extends BridgeAbstract
     {
         $nsfw = $this->getInput('nsfw') ? 'include' : 'hide';
         $query_str = rawurlencode('{"0":{"adultDisplayMode":"' . $nsfw . '","categories":[],"categoryMatch":"all","sortOrder":"newest"}}');
-        $posts = $this->getData("https://cohost.org/api/v1/trpc/artistAlley.getListingsForDisplay?batch=1&input={$query_str}", true)
+        $posts = $this->getData("https://cohost.org/api/v1/trpc/artistAlley.getListingsForDisplay?batch=1&input={$query_str}")
             or returnServerError('No Artist Alley posts could be found.');
         $ads = $posts ? $posts[0]['result']['data']['listings'] : null;
         $users = $posts ? $posts[0]['result']['data']['relevantProjects'] : null;
