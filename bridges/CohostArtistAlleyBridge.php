@@ -6,7 +6,7 @@ class CohostArtistAlleyBridge extends BridgeAbstract
     const URI = 'https://cohost.org/rc/artist-alley';
     const DESCRIPTION = 'Timed posts from Cohost\'s Artist Alley page.';
     const MAINTAINER = 'mruac';
-    const CACHE_TIMEOUT = 1800; //30 mins
+    const CACHE_TIMEOUT = 3600; //1hrs, ads are manually reviewed
     const PARAMETERS = [
         [
             'nsfw' => [
