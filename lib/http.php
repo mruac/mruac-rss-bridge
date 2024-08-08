@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Thrown by bridges
+ */
+final class RateLimitException extends \Exception
+{
+}
+
+/**
+ * @internal Do not use this class in bridges
+ */
 class HttpException extends \Exception
 {
     public ?Response $response;
@@ -217,6 +227,16 @@ final class Request
     public function toArray(): array
     {
         return $this->get;
+    }
+
+    public function tryDecryptUrl(): void
+    {
+        $urlEncryptionService = UrlEncryptionService::fromRequest($this);
+        if (!$urlEncryptionService) {
+            throw new \Exception('The encrypted URL token is not valid.');
+        }
+
+        $this->get = $urlEncryptionService->toArray();
     }
 }
 
