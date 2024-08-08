@@ -232,7 +232,6 @@ config/*
 !config/nginx.conf
 !config/php-fpm.conf
 !config/php.ini
-docker-compose.*
 
 ######################
 ## VisualStudioCode ##
