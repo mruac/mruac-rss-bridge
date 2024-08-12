@@ -13,7 +13,7 @@ class HtmlFormat extends FormatAbstract
         $formatFactory = new FormatFactory();
         $formats = [];
 
-        if (str_contains(strtolower($queryString), strtolower(UrlEncryptionService::PARAMETER_NAME . '='))) {
+        if (false !== stripos($queryString, UrlEncryptionService::PARAMETER_NAME . '=')) {
             $encryptionToken = 'yes';
         } else {
             $encryptionToken = null;

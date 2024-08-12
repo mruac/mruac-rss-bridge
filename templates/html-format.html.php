@@ -29,41 +29,43 @@
             <a href="<?= e($uri) ?>" target="_blank"><?= e($title) ?></a>
         </h1>
 
-        <?php if (UrlEncryptionService::enabled() && $encryption_token !== 'yes'): ?>
-            <div style="text-align:center;">
-                <details>
-                    <summary style="list-style:none;cursor:pointer;">
-                        &#x1f512;&nbsp;<small style="color:gray;font-style:italic;">Encrypt This Feed</small>
-                    </summary>
-                    <div style="padding:20px;">
-                        <p>Obscure the parameters used to create this feed. This is essential if your
-                            feed includes private data like API tokens, passphrases, etc.</p>
-                        <p><small>
-                            If you specifically want an encrypted link to another format, click the button below and choose
-                                a format from the generated page.
-                        </small></p>
-                        <p>
-                            <!--
-                                TODO: Hitting this button over and over can result in non-cached
-                                hits to the feed's target website.
-                            -->
-                            <a target="_blank" href="<?php print(
-                                strtok($_SERVER['REQUEST_URI'], '?')
-                                . '?' . UrlEncryptionService::PARAMETER_NAME . '='
-                                . urlencode(UrlEncryptionService::generateFromQueryString($_SERVER['QUERY_STRING']))
-                            ); ?>">
-                                <button class="rss-feed">
-                                    Encrypt URL
-                                </button>
-                            </a>
-                        </p>
-                    </div>
-                </details>
-            </div>
-        <?php else: ?>
-            <div style="text-align:center;">
-                <p><span style="color:green;">&#x2713;</span>&nbsp;<small style="color:gray;font-style:italic;">Encrypted</small></p>
-            </div>
+        <?php if (UrlEncryptionService::enabled()): ?>
+            <?php if ($encryption_token !== 'yes'): ?>
+                <div style="text-align:center;">
+                    <details>
+                        <summary style="list-style:none;cursor:pointer;">
+                            &#x1f512;&nbsp;<small style="color:gray;font-style:italic;">Encrypt This Feed</small>
+                        </summary>
+                        <div style="padding:20px;">
+                            <p>Obscure the parameters used to create this feed. This is essential if your
+                                feed includes private data like API tokens, passphrases, etc.</p>
+                            <p><small>
+                                If you specifically want an encrypted link to another format, click the button below and choose
+                                    a format from the generated page.
+                            </small></p>
+                            <p>
+                                <!--
+                                    TODO: Hitting this button over and over can result in non-cached
+                                    hits to the feed's target website.
+                                -->
+                                <a target="_blank" href="<?php print(
+                                    strtok($_SERVER['REQUEST_URI'], '?')
+                                    . '?' . UrlEncryptionService::PARAMETER_NAME . '='
+                                    . urlencode(UrlEncryptionService::generateFromQueryString($_SERVER['QUERY_STRING']))
+                                ); ?>">
+                                    <button class="rss-feed">
+                                        Encrypt URL
+                                    </button>
+                                </a>
+                            </p>
+                        </div>
+                    </details>
+                </div>
+            <?php else: ?>
+                <div style="text-align:center;">
+                    <p><span style="color:green;">&#x2713;</span>&nbsp;<small style="color:gray;font-style:italic;">Encrypted</small></p>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <div class="buttons">
