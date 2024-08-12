@@ -4,6 +4,13 @@ services:
     image: rssbridge/rss-bridge:latest
     volumes:
       - ./config:/config
+      - ./actions:/app/actions
+      - ./lib:/app/lib
+      - ./formats:/app/formats
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./caches:/app/caches
+      - ./bridges:/app/bridges
     ports:
       - 3000:80
     restart: unless-stopped
