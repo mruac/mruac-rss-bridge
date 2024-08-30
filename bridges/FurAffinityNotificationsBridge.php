@@ -341,6 +341,10 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
 
     private function parseFavourites($record)
     {
+        if($record->plaintext === 'The favorite this notification was for has since been removed by the user.'){
+            return null;
+        }
+        
         //same for both old and new ui
         $user = $record->find('a', 0);
         $submission = $record->find('a', 1);
