@@ -59,13 +59,34 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
     ];
     private $FA_AUTH_COOKIE;
     const EMOJIS = [
-        '😛', '😎', '😉', '😲',
-        '🙂', '😈', '😵', '😏',
-        '😇', '🤡', '🤣', '💿',
-        '😭', ':/', '😳', '🎁',
-        '🍺', '❤', '🤓', '🎶',
-        '🤪', '🤨', '😐', '🙁',
-        '🥱', '😠', '😃', '😡',
+        '😛',
+        '😎',
+        '😉',
+        '😲',
+        '🙂',
+        '😈',
+        '😵',
+        '😏',
+        '😇',
+        '🤡',
+        '🤣',
+        '💿',
+        '😭',
+        ':/',
+        '😳',
+        '🎁',
+        '🍺',
+        '❤',
+        '🤓',
+        '🎶',
+        '🤪',
+        '🤨',
+        '😐',
+        '🙁',
+        '🥱',
+        '😠',
+        '😃',
+        '😡',
         '🤐'
     ];
     const SMILEYS = [
@@ -452,10 +473,21 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             $title = "{$who} left a shout on your profile";
             $html = $this->getFASimpleHTMLDOM($url, true)
                 or returnServerError("Could not load {$url}. Check your cookies?");
+                //return shout contents or null if disappeared off of user's profile.
             if ($oldUI) {
-                $content = $this->formatComment($html->find("[id='$cid'] .no_overflow", 0));
+                $el = $html->find("[id='$cid'] .no_overflow", 0);
+                if (is_null($el)) {
+                    return null;
+                } else {
+                    $content = $this->formatComment($el);
+                }
             } else {
-                $content = $this->formatComment($html->find("[id='$cid']", 0)->parent()->find('.user-submitted-links', 0));
+                $el = $html->find("[id='$cid']", 0);
+                if (is_null($el)) {
+                    return null;
+                } else {
+                    $content = $this->formatComment($el->parent()->find('.user-submitted-links', 0));
+                }
             }
         }
 
