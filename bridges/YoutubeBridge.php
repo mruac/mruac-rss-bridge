@@ -82,13 +82,14 @@ class YoutubeBridge extends BridgeAbstract
     {
         $cacheKey = 'youtube_rate_limit';
         if ($this->cache->get($cacheKey)) {
-            throw new HttpException('429 Too Many Requests', 429);
+            throw new RateLimitException();
         }
         try {
             $this->collectDataInternal();
         } catch (HttpException $e) {
             if ($e->getCode() === 429) {
                 $this->cache->set($cacheKey, true, 60 * 16);
+                throw new RateLimitException();
             }
             throw $e;
         }
@@ -193,14 +194,7 @@ class YoutubeBridge extends BridgeAbstract
             $html = $this->fetch($url_listing);
             $jsonData = $this->extractJsonFromHtml($html);
             $jsonData = $jsonData->contents->twoColumnSearchResultsRenderer->primaryContents;
-            $jsonData = $jsonData->sectionListRenderer->contents;
-            foreach ($jsonData as $data) {
-                // Search result includes some ads, have to filter them
-                if (isset($data->itemSectionRenderer->contents[0]->videoRenderer)) {
-                    $jsonData = $data->itemSectionRenderer->contents;
-                    break;
-                }
-            }
+            $jsonData = $jsonData->sectionListRenderer->contents[0]->itemSectionRenderer->contents;
             $this->fetchItemsFromFromJsonData($jsonData);
             $this->feeduri = $url_listing;
             $this->feedName = 'Search: ' . $search;

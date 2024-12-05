@@ -679,7 +679,7 @@ class FurAffinityBridge extends BridgeAbstract
                 $name = parent::getName();
                 if ($this->getOption('aCookie') !== null) {
                     $username = $this->loadCacheValue('username');
-                    if ($username !== null) {
+                    if ($username) {
                         $name = $username . '\'s ' . parent::getName();
                     }
                 }
