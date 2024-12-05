@@ -109,7 +109,7 @@ final class BridgeCard
         EOD;
 
         if (Configuration::getConfig('authentication', 'token') && $token) {
-            $form .= sprintf('<input type="hidden" name="token" value="%s" />', e($token));
+            $form .= sprintf('<input type="hidden" name="__key" value="%s" />', e($token));
         }
 
         if (!empty($contextName)) {

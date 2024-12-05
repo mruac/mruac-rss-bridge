@@ -11,7 +11,7 @@ class TokenAuthenticationMiddleware implements Middleware
         }
 
         // Always add token to request attribute
-        $request = $request->withAttribute('token', $request->get('token'));
+        $request = $request->withAttribute('token', $request->get('__key'));
 
         if (! $request->attribute('token')) {
             return new Response(render(__DIR__ . '/../templates/token.html.php', [
