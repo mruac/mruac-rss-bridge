@@ -4,7 +4,6 @@ class NintendoBridge extends XPathAbstract
 {
     const NAME = 'Nintendo Software Updates';
     const URI = 'https://www.nintendo.co.uk/Support/Welcome-to-Nintendo-Support-11593.html';
-    const DONATION_URI = '';
     const DESCRIPTION = self::NAME;
     const MAINTAINER = 'Niehztog';
     const PARAMETERS = [
@@ -478,7 +477,7 @@ class NintendoBridge extends XPathAbstract
         return $date->getTimestamp();
     }
 
-    protected function generateItemId(FeedItem $item)
+    protected function generateItemId(array $item)
     {
         return $this->getCurrentCategory() . '-' . $this->lastId;
     }

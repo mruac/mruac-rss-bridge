@@ -39,7 +39,7 @@ abstract class BaseFormatTest extends TestCase
 
             $items = [];
             foreach ($data['items'] as $item) {
-                $items[] = \FeedItem::fromArray($item);
+                $items[] = ($item);
             }
 
             return (object)[
@@ -64,6 +64,6 @@ abstract class BaseFormatTest extends TestCase
         $format->setFeed($sample->meta);
         $format->setLastModified(strtotime('2000-01-01 12:00:00 UTC'));
 
-        return $format->stringify();
+        return $format->render();
     }
 }

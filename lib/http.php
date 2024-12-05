@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Thrown by bridges
+ */
+final class RateLimitException extends \Exception
+{
+}
+
+/**
+ * @internal Do not use this class in bridges
+ */
 class HttpException extends \Exception
 {
     public ?Response $response;
@@ -103,6 +113,7 @@ final class CurlHttpClient implements HttpClient
         if ($config['proxy']) {
             curl_setopt($ch, CURLOPT_PROXY, $config['proxy']);
         }
+
         if (curl_setopt_array($ch, $config['curl_options']) === false) {
             throw new \Exception('Tried to set an illegal curl option');
         }
@@ -331,7 +342,14 @@ final class Response
         return array_pop($header);
     }
 
-    public function withBody(string $body): Response
+    public function withHeader(string $name, string $value): self
+    {
+        $clone = clone $this;
+        $clone->headers[$name] = [$value];
+        return $clone;
+    }
+
+    public function withBody(string $body): self
     {
         $clone = clone $this;
         $clone->body = $body;

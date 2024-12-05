@@ -2,15 +2,24 @@
 
 final class FrontpageAction implements ActionInterface
 {
-    public function execute(Request $request)
+    private BridgeFactory $bridgeFactory;
+
+    public function __construct(
+        BridgeFactory $bridgeFactory
+    ) {
+        $this->bridgeFactory = $bridgeFactory;
+    }
+
+    public function __invoke(Request $request): Response
     {
+        $token = $request->attribute('token');
+
         $messages = [];
         $activeBridges = 0;
 
-        $bridgeFactory = new BridgeFactory();
-        $bridgeClassNames = $bridgeFactory->getBridgeClassNames();
+        $bridgeClassNames = $this->bridgeFactory->getBridgeClassNames();
 
-        foreach ($bridgeFactory->getMissingEnabledBridges() as $missingEnabledBridge) {
+        foreach ($this->bridgeFactory->getMissingEnabledBridges() as $missingEnabledBridge) {
             $messages[] = [
                 'body' => sprintf('Warning : Bridge "%s" not found', $missingEnabledBridge),
                 'level' => 'warning'
@@ -19,20 +28,22 @@ final class FrontpageAction implements ActionInterface
 
         $body = '';
         foreach ($bridgeClassNames as $bridgeClassName) {
-            if ($bridgeFactory->isEnabled($bridgeClassName)) {
-                $body .= BridgeCard::render($bridgeClassName, $request);
+            if ($this->bridgeFactory->isEnabled($bridgeClassName)) {
+                $body .= BridgeCard::render($this->bridgeFactory, $bridgeClassName, $token);
                 $activeBridges++;
             }
         }
 
-        // todo: cache this renderered template?
-        return render(__DIR__ . '/../templates/frontpage.html.php', [
-            'messages' => $messages,
-            'admin_email' => Configuration::getConfig('admin', 'email'),
-            'admin_telegram' => Configuration::getConfig('admin', 'telegram'),
-            'bridges' => $body,
-            'active_bridges' => $activeBridges,
-            'total_bridges' => count($bridgeClassNames),
-        ]);
+        $response = new Response(render(__DIR__ . '/../templates/frontpage.html.php', [
+            'messages'          => $messages,
+            'admin_email'       => Configuration::getConfig('admin', 'email'),
+            'admin_telegram'    => Configuration::getConfig('admin', 'telegram'),
+            'bridges'           => $body,
+            'active_bridges'    => $activeBridges,
+            'total_bridges'     => count($bridgeClassNames),
+        ]));
+
+        // TODO: The rendered template could be cached, but beware config changes that changes the html
+        return $response;
     }
 }
