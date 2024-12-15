@@ -28,6 +28,8 @@ class mruac_TestBridge extends BridgeAbstract
         ]
     ];
 
+    //collectData() is run before any other "getX()" is called. useful to gather info then create the dynamic titles / feed uris after.
+    //eg. set private $profile and then get it in collectData(), then use $this->profile in getName, getIcon, getURI, etc.
     public function collectData()
     {
         $table = <<<EOD
