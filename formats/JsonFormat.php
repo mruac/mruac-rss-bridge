@@ -23,7 +23,7 @@ class JsonFormat extends FormatAbstract
         'uid',
     ];
 
-    public function render(): string
+    public function render(?Request $request): string
     {
         $feedArray = $this->getFeed();
 

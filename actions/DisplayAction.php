@@ -135,7 +135,7 @@ class DisplayAction implements ActionInterface
             'last-modified' => gmdate('D, d M Y H:i:s ', $now) . 'GMT',
             'content-type'  => $format->getMimeType() . '; charset=UTF-8',
         ];
-        $body = $format->render();
+        $body = $format->render($request);
 
         // This is supposed to remove non-utf8 byte sequences, but I'm unsure if it works
         ini_set('mbstring.substitute_character', 'none');

@@ -4,7 +4,7 @@ class SfeedFormat extends FormatAbstract
 {
     const MIME_TYPE = 'text/plain';
 
-    public function render(): string
+    public function render(?Request $request): string
     {
         $text = '';
         foreach ($this->getItems() as $item) {

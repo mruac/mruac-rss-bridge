@@ -4,17 +4,20 @@ class HtmlFormat extends FormatAbstract
 {
     const MIME_TYPE = 'text/html';
 
-    public function render(): string
+    public function render(?Request $request): string
     {
         // This query string is url encoded
         $queryString = $_SERVER['QUERY_STRING'];
 
-        // TODO: this should be the proper bridge short name and not user provided string
-        $bridgeName = $_GET['bridge'];
-
         $feedArray = $this->getFeed();
         $formatFactory = new FormatFactory();
         $formats = [];
+
+        if (false !== stripos($queryString, UrlEncryptionService::PARAMETER_NAME . '=')) {
+            $encryptionToken = 'yes';
+        } else {
+            $encryptionToken = null;
+        }
 
         // Create all formats (except HTML)
         $formatNames = $formatFactory->getFormatNames();
@@ -23,7 +26,14 @@ class HtmlFormat extends FormatAbstract
                 continue;
             }
             // The format url is relative, but should be absolute in order to help feed readers.
-            $formatUrl = '?' . str_ireplace('format=Html', 'format=' . $formatName, $queryString);
+            if (str_contains(strtolower($queryString), 'format=html')) {
+                $formatUrl = '?' . str_ireplace('format=Html', 'format=' . $formatName, $queryString);
+            } else {
+                // If we're viewing the HtmlFormat and the 'format' GET parameter isn't here, this is likely an
+                //   encrypted URL being viewed. Handle this by reconstructing the raw URL with the new format.
+                $formatUrl = '?' . http_build_query($request->toArray());
+                $formatUrl = str_ireplace('format=Html', 'format=' . $formatName, $formatUrl);
+            }
             $formatObject = $formatFactory->create($formatName);
             $formats[] = [
                 'url'       => $formatUrl,
@@ -51,13 +61,15 @@ class HtmlFormat extends FormatAbstract
         }
 
         $html = render_template(__DIR__ . '/../templates/html-format.html.php', [
-            'bridge_name'   => $bridgeName,
-            'title'         => $feedArray['name'],
-            'formats'       => $formats,
-            'uri'           => $feedArray['uri'],
-            'items'         => $items,
-            'donation_uri'  => $donationUri,
+            'bridge_name'      => $request->get('bridge'),
+            'title'            => $feedArray['name'],
+            'formats'          => $formats,
+            'uri'              => $feedArray['uri'],
+            'items'            => $items,
+            'donation_uri'     => $donationUri,
+            'encryption_token' => $encryptionToken,
         ]);
         return $html;
     }
 }
+

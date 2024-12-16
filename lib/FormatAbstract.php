@@ -11,7 +11,7 @@ abstract class FormatAbstract
 
     protected int $lastModified;
 
-    abstract public function render(): string;
+    abstract public function render(?Request $request): string;
 
     public function setFeed(array $feed)
     {

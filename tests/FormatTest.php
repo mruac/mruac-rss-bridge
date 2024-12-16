@@ -58,7 +58,7 @@ class FormatTest extends TestCase
 
 class TestFormat extends \FormatAbstract
 {
-    public function render(): string
+    public function render(?\Request $request): string
     {
     }
 }

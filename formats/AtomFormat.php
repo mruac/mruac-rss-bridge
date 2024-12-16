@@ -14,7 +14,7 @@ class AtomFormat extends FormatAbstract
     protected const ATOM_NS = 'http://www.w3.org/2005/Atom';
     protected const MRSS_NS = 'http://search.yahoo.com/mrss/';
 
-    public function render(): string
+    public function render(?Request $request): string
     {
         $document = new \DomDocument('1.0', 'UTF-8');
         $document->formatOutput = true;
