@@ -21,13 +21,30 @@ automatically use the default settings from `config.default.ini.php`.
 
 The configuration file is split into sections:
 
-* [system](#system)
-* [http client](#http-client)
-* [cache](#cache)
-* [proxy](#proxy)
-* [authentication](#authentication)
-* [admin](#admin)
-* [error](#error)
+- [Available parameters](#available-parameters)
+    - [System](#system)
+        - [Timezone](#timezone)
+    - [Cache](#cache)
+        - [type](#type)
+        - [custom\_timeout](#custom_timeout)
+    - [Proxy](#proxy)
+        - [url](#url)
+        - [name](#name)
+        - [by\_bridge](#by_bridge)
+    - [Http client](#http-client)
+        - [timeout](#timeout)
+        - [useragent](#useragent)
+    - [HTTP Authentication](#http-authentication)
+        - [enable](#enable)
+        - [username](#username)
+        - [password](#password)
+    - [URL Token Authentication](#url-token-authentication)
+    - [URL Encryption](#url-encryption)
+    - [Admin](#admin)
+        - [email](#email)
+    - [error](#error)
+        - [output](#output)
+        - [report\_limit](#report_limit)
 
 _System_: This section specifies system specific parameters
 
@@ -121,7 +138,7 @@ Default network timeout.
 
 Default user agent.
 
-## Authentication
+## HTTP Authentication
 
 This section provides following parameters:
 
@@ -146,6 +163,26 @@ Defines the user name used for login.
 ### password
 
 Defines the password used for login. Use a strong password to prevent others from guessing your login!
+
+## URL Token Authentication
+
+If your feed reader does not support HTTP Authentication, you may use URL authentication instead; via a token parameter.
+
+It is recommended to use a long and complex password to secure your RSS-Bridge instance.
+
+_Notice_: The token is required for all requests when enabled! Make sure to update feed subscriptions accordingly.
+
+`token = ""` = Disabled (default)
+
+## URL Encryption
+
+As bridge parameters get complex and the URL Token is included (if enabled), the URL Encryption feature encodes all URL parameters into an encrypted string. Enable this to encrypt and obscure the query parameters used in your feed subscriptions.
+
+It is recommended to use a long and complex password that is different to the other passwords to securely encrypt the URL parameters.
+
+`enc_url_key = ""` = Disabled (default)
+
+`enc_url_key = "b3c7@hsLqk)P(SJvjCBDUy]GMg6RamdHxEWV8K9nA4QN.p_5"` = Enabled (Example - do not use this password!)
 
 ## Admin
 

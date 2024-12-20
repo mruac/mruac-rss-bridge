@@ -120,6 +120,19 @@ password = ""
 ; Token authentication (URL)
 token = ""
 
+[authentication]
+
+; Encrypted URL key. A random string between 16 and 64 characters long which is used to generate
+; compressed and encrypted feed URLs, to keep private information secret;
+; especially the URL token authentication parameter.
+;
+; NEVER SHARE THIS KEY.
+; A password generator should be used to create this string. Whitespace is NOT ALLOWED.
+;
+; If this value is empty (default), then URL encryption is not enabled.
+; Example key (DO NOT USE THIS): "b3c7@hsLqk)P(SJvjCBDUy]GMg6RamdHxEWV8K9nA4QN.p_5"
+enc_url_key = ""
+
 [error]
 
 ; Defines how error messages are returned by RSS-Bridge

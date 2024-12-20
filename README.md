@@ -281,6 +281,13 @@ Modify `config.ini.php`:
 
     token = "hunter2"
 
+### How to encrypt the URL parameters (shorten long and complex bridge parameters; encrypt instance token in feed URL)
+
+Read the [documentation](docs/03_For_Hosts/08_Custom_Configuration.md#url-encryption) and modify `config.ini.php` accordingly:
+
+    enc_url_key = "b3c7@hsLqk)P(SJvjCBDUy]GMg6RamdHxEWV8K9nA4QN.p_5"
+
+
 ### How to remove all cache items
 
 As current user:
