@@ -143,27 +143,6 @@ class BlueskyBridge extends BridgeAbstract
 
     public function collectData()
     {
-        //https://bsky.app/profile/mm-gazzetta-sport.bsky.social/post/3lb5byr5fuw2c
-        if ($this->getInput('post_id') !== null) {
-            // $videoURL = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:heeihz7xdhf7dbjx4befobqw&cid=bafkreifexy4uovu5oxtbj5354il3ns5raqkgx2wilfuuejucllxfmde7iq';
-            // $resolvedVideoURL = getContents($videoURL, [], [CURLOPT_FOLLOWLOCATION => 1, CURLOPT_NOBODY => 1], true);
-            // print_r($resolvedVideoURL->getHeaders()['location'][0]);
-
-            //explode and get handle
-            $explode = explode('/', $this->getInput('post_id'));
-            $handle = $explode[4];
-            $post_id = $explode[6];
-            $did = $this->resolveHandle($handle);
-            //at://did:plc:xh7ydadmdldkzzi5fzccg6zg/app.bsky.feed.post/3lcnpj2ro5c2p
-            //https://public.api.bsky.app/xrpc/app.bsky.feed.getPosts?uris=at://did:plc:hw753x7fbyzmn5ouveyepbxx/app.bsky.feed.post/3lcvcqvmyw223
-            $uri = 'https://public.api.bsky.app/xrpc/app.bsky.feed.getPosts?uris=at://' . urlencode($did) . '/app.bsky.feed.post/' . $post_id;
-            $response = json_decode(getContents($uri), true);
-            $text = $response['posts'][0]['record']['text'];
-            print_r($uri);
-            print('<hr>' . $this->textToDescription($response['posts'][0]['record']));
-            return;
-        }
-
         $user_id = $this->getInput('user_id');
         $handle_match = preg_match('/(?:[a-zA-Z]*\.)+([a-zA-Z](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)/', $user_id, $handle_res); //gets the TLD in $handle_match[1]
         $did_match = preg_match('/did:plc:[a-z2-7]{24}/', $user_id); //https://github.com/did-method-plc/did-method-plc#identifier-syntax
@@ -195,12 +174,13 @@ class BlueskyBridge extends BridgeAbstract
 
             $postAuthorDID = $post['post']['author']['did'];
             $postAuthorHandle = $post['post']['author']['handle'] !== 'handle.invalid' ? '<i>@' . $post['post']['author']['handle'] . '</i> ' : '';
-            $postDisplayName = e($post['post']['author']['displayName']) ?? '';
+            $postDisplayName = $post['post']['author']['displayName'] ?? '';
+            $postDisplayName = e($postDisplayName);
             $postUri = $item['uri'];
 
             if (Debug::isEnabled()) {
                 $url = explode('/', $post['post']['uri']);
-                error_log('https://bsky.app/profile/' . $url[2] . '/post/' . $url[4]);
+                $this->logger->debug('https://bsky.app/profile/' . $url[2] . '/post/' . $url[4]);
             }
 
             $description = '';
@@ -275,9 +255,20 @@ class BlueskyBridge extends BridgeAbstract
                     $description .= '<a href="' . $uri_reconstructed . '">Quoted post detached.</a>';
                 } elseif (isset($quotedRecord['blocked']) && $quotedRecord['blocked']) { //blocked by quote author
                     $description .= 'Author of quoted post has blocked OP.';
+                } elseif (
+                    ($quotedRecord['$type'] ?? '') === 'app.bsky.feed.defs#generatorView' ||
+                    ($quotedRecord['$type'] ?? '') === 'app.bsky.graph.defs#listView'
+                ) {
+                    $description .= $this->getListFeedDescription($quotedRecord);
+                } elseif (
+                    ($quotedRecord['$type'] ?? '') === 'app.bsky.graph.starterpack' ||
+                    ($quotedRecord['$type'] ?? '') === 'app.bsky.graph.defs#starterPackViewBasic'
+                ) {
+                    $description .= $this->getStarterPackDescription($post['post']['embed']['record']);
                 } else {
                     $quotedAuthorDid = $quotedRecord['author']['did'];
-                    $quotedDisplayName = e($quotedRecord['author']['displayName']) ?? '';
+                    $quotedDisplayName = $quotedRecord['author']['displayName'] ?? '';
+                    $quotedDisplayName = e($quotedDisplayName);
                     $quotedAuthorHandle = $quotedRecord['author']['handle'] !== 'handle.invalid' ? '<i>@' . $quotedRecord['author']['handle'] . '</i>' : '';
 
                     $parts = explode('/', $quotedRecord['uri']);
@@ -347,7 +338,8 @@ class BlueskyBridge extends BridgeAbstract
 
                 $replyPostAuthorDID = $replyPost['author']['did'];
                 $replyPostAuthorHandle = $replyPost['author']['handle'] !== 'handle.invalid' ? '<i>@' . $replyPost['author']['handle'] . '</i> ' : '';
-                $replyPostDisplayName = e($replyPost['author']['displayName']) ?? '';
+                $replyPostDisplayName = $replyPost['author']['displayName'] ?? '';
+                $replyPostDisplayName = e($replyPostDisplayName);
                 $replyPostUri = self::URI . '/profile/' . $this->fallbackAuthor($replyPost['author'], 'url') . '/post/' . explode('app.bsky.feed.post/', $replyPost['uri'])[1];
 
                 // reply post
@@ -417,9 +409,20 @@ class BlueskyBridge extends BridgeAbstract
                         $description .= '<a href="' . $uri_reconstructed . '">Quoted post detached.</a>';
                     } elseif (isset($replyQuotedRecord['blocked']) && $replyQuotedRecord['blocked']) { //blocked by quote author
                         $description .= 'Author of quoted post has blocked OP.';
+                    } elseif (
+                        ($replyQuotedRecord['$type'] ?? '') === 'app.bsky.feed.defs#generatorView' ||
+                        ($replyQuotedRecord['$type'] ?? '') === 'app.bsky.graph.defs#listView'
+                    ) {
+                        $description .= $this->getListFeedDescription($replyQuotedRecord);
+                    } elseif (
+                        ($replyQuotedRecord['$type'] ?? '') === 'app.bsky.graph.starterpack' ||
+                        ($replyQuotedRecord['$type'] ?? '') === 'app.bsky.graph.defs#starterPackViewBasic'
+                    ) {
+                        $description .= $this->getStarterPackDescription($replyPost['embed']['record']);
                     } else {
                         $quotedAuthorDid = $replyQuotedRecord['author']['did'];
-                        $quotedDisplayName = e($replyQuotedRecord['author']['displayName']) ?? '';
+                        $quotedDisplayName = $replyQuotedRecord['author']['displayName'] ?? '';
+                        $quotedDisplayName = e($quotedDisplayName);
                         $quotedAuthorHandle = $replyQuotedRecord['author']['handle'] !== 'handle.invalid' ? '<i>@' . $replyQuotedRecord['author']['handle'] . '</i>' : '';
 
                         $parts = explode('/', $replyQuotedRecord['uri']);
@@ -536,7 +539,8 @@ class BlueskyBridge extends BridgeAbstract
                 case 'url':
                     return $author['did'];
                 case 'display':
-                    return e($author['displayName']);
+                    $displayName = $author['displayName'] ?? '';
+                    return e($displayName);
             }
         }
         return $author['handle'];
@@ -562,11 +566,19 @@ class BlueskyBridge extends BridgeAbstract
             }
             $title .= ', replying to ' . $replyAuthor;
         }
-        if (isset($post['post']['embed']) && isset($post['post']['embed']['record'])) {
+
+        if (
+            isset($post['post']['embed']) &&
+            isset($post['post']['embed']['record']) &&
+            //if not starter pack, feed or list
+            ($post['post']['embed']['record']['$type'] ?? '') !== 'app.bsky.feed.defs#generatorView' &&
+            ($post['post']['embed']['record']['$type'] ?? '') !== 'app.bsky.graph.defs#listView' &&
+            ($post['post']['embed']['record']['$type'] ?? '') !== 'app.bsky.graph.defs#starterPackViewBasic'
+        ) {
             if (isset($post['post']['embed']['record']['blocked'])) {
                 $quotedAuthor = 'blocked user';
             } elseif (isset($post['post']['embed']['record']['notFound'])) {
-                $quotedAuthor = 'deleted post';
+                $quotedAuthor = 'deleted psost';
             } elseif (isset($post['post']['embed']['record']['detached'])) {
                 $quotedAuthor = 'detached post';
             } else {
@@ -595,9 +607,64 @@ class BlueskyBridge extends BridgeAbstract
     {
         $uri = 'https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=' . urlencode($did) . '&filter=' . urlencode($filter) . '&limit=30';
         if (Debug::isEnabled()) {
-            error_log($uri);
+            $this->logger->debug($uri);
         }
         $response = json_decode(getContents($uri), true);
         return $response;
+    }
+
+    //Embed for generated feeds and lists
+    private function getListFeedDescription(array $record): string
+    {
+        $feedViewAvatar = isset($record['avatar']) ? '<img src="' . preg_replace('/\/img\/avatar\//', '/img/avatar_thumbnail/', $record['avatar']) . '">' : '';
+        $feedViewName = e($record['displayName'] ?? $record['name']);
+        $feedViewDescription = e($record['description'] ?? '');
+        $authorDisplayName = e($record['creator']['displayName']);
+        $authorHandle = e($record['creator']['handle']);
+        $likeCount = isset($record['likeCount']) ? '<br>Liked by ' . e($record['likeCount']) . ' users' : '';
+        preg_match('/\/([^\/]+)$/', $record['uri'], $matches);
+        if (($record['purpose'] ?? '') === 'app.bsky.graph.defs#modlist') {
+            $typeURL = '/lists/';
+            $typeDesc = 'moderation list';
+        } elseif (($record['purpose'] ?? '') === 'app.bsky.graph.defs#curatelist') {
+            $typeURL = '/lists/';
+            $typeDesc = 'list';
+        } else {
+            $typeURL = '/feed/';
+            $typeDesc = 'feed';
+        }
+        $uri = e('https://bsky.app/profile/' . $record['creator']['did'] . $typeURL . $matches[1]);
+
+        return <<<END
+<blockquote>
+<b><a href="{$uri}">{$feedViewName}</a></b><br/>
+Bluesky {$typeDesc} by <b>{$authorDisplayName}</b> <i>@{$authorHandle}</i>
+<figure>
+{$feedViewAvatar}
+<figcaption>{$feedViewDescription}{$likeCount}</figcaption>
+</figure>
+</blockquote>
+END;
+    }
+
+    private function getStarterPackDescription(array $record): string
+    {
+        if (!isset($record['record'])) {
+            return 'Failed to get starter pack information.';
+        }
+        $starterpackRecord = $record['record'];
+        $starterpackName = e($starterpackRecord['name']);
+        $starterpackDescription = e($starterpackRecord['description']);
+        $creatorDisplayName = e($record['creator']['displayName']);
+        $creatorHandle = e($record['creator']['handle']);
+        preg_match('/\/([^\/]+)$/', $starterpackRecord['list'], $matches);
+        $uri = e('https://bsky.app/starter-pack/' . $record['creator']['did'] . '/' . $matches[1]);
+        return <<<END
+<blockquote>
+<b><a href="{$uri}">{$starterpackName}</a></b><br/>
+Bluesky starter pack by <b>{$creatorDisplayName}</b> <i>@{$creatorHandle}</i><br/>
+{$starterpackDescription}
+</blockquote>
+END;
     }
 }

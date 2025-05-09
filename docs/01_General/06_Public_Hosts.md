@@ -3,7 +3,7 @@
 | Country | Address | Status |  Contact | Comment |
 |:-------:|---------|--------|----------|---------|
 | ![](https://iplookup.flagfox.net/images/h16/GB.png) | https://rss-bridge.org/bridge01 | ![](https://img.shields.io/website/https/rss-bridge.org/bridge01.svg) | [@dvikan](https://github.com/dvikan) | London, Digital Ocean|
-| ![](https://iplookup.flagfox.net/images/h16/FR.png) | https://rssbridge.flossboxin.org.in | ![](https://img.shields.io/badge/website-up-brightgreen) | [@vdbhb59](https://github.com/vdbhb59) | Hosted with OVH SAS (Maintained in India) |
+| ![](https://iplookup.flagfox.net/images/h16/FR.png) | https://rssbridge.flossboxin.org.in | ![](https://img.shields.io/badge/website-up-brightgreen) | [@vdbhb59](https://github.com/vdbhb59) | Hosted with Netcup Germany (Maintained in India) |
 | ![](https://iplookup.flagfox.net/images/h16/FR.png) | https://rss-bridge.cheredeprince.net | ![](https://img.shields.io/website/https/rss-bridge.cheredeprince.net) | [@La_Bécasse](https://cheredeprince.net/contact) | Self-Hosted at home in France |
 | ![](https://iplookup.flagfox.net/images/h16/FR.png) | https://rss-bridge.sans-nuage.fr | ![](https://img.shields.io/website/https/rss-bridge.sans-nuage.fr) | [@Alsace Réseau Neutre](https://arn-fai.net/contact) | Hosted in Alsace, France |
 | ![](https://iplookup.flagfox.net/images/h16/GB.png) | https://rss-bridge.lewd.tech | ![](https://img.shields.io/website/https/rss-bridge.lewd.tech.svg) | [@Erisa](https://github.com/Erisa) | Hosted in London, protected by Cloudflare Rate Limiting |
@@ -25,6 +25,7 @@
 | ![](https://iplookup.flagfox.net/images/h16/IN.png) | https://rssbridge.projectsegfau.lt | ![](https://img.shields.io/website/https/rssbridge.projectsegfau.lt) | [@gi-yt](https://aryak.me) | Self-Hosted at Mumbai, India with Airtel (ISP) |
 | ![](https://iplookup.flagfox.net/images/h16/US.png) | https://rb.vern.cc | ![](https://img.shields.io/website/https/rb.vern.cc.svg) | [@vern.cc](https://vern.cc/en/admin) | Hosted with Hetzner, US |
 | ![](https://iplookup.flagfox.net/images/h16/DE.png) | https://rss.bloat.cat | ![](https://img.shields.io/website/https/rss.bloat.cat) | [@vlnst](https://bloat.cat/contact) | Hosted with Datalix, Germany |
+| ![](https://iplookup.flagfox.net/images/h16/CZ.png) | https://rssbridge.prenghy.org | ![](https://img.shields.io/website/https/rssbridge.prenghy.org.svg) | [@pprenghy](https://github.com/pprenghy) | Hosted with vpsFree, The Czech Republic |
 
 
 ## Inactive instances

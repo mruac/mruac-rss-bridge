@@ -18,17 +18,16 @@ class TikTokBridge extends BridgeAbstract
 
     const TEST_DETECT_PARAMETERS = [
         'https://www.tiktok.com/@tiktok' => [
-            'context' => 'By user', 'username' => '@tiktok'
+            'context' => 'By user',
+            'username' => '@tiktok',
         ]
     ];
 
-    const CACHE_TIMEOUT = 900; // 15 minutes
+    const CACHE_TIMEOUT = 60 * 60; // 1h
 
     public function collectData()
     {
         $html = getSimpleHTMLDOMCached('https://www.tiktok.com/embed/' . $this->processUsername());
-
-        $author = $html->find('span[data-e2e=creator-profile-userInfo-TUXText]', 0)->plaintext ?? self::NAME;
         $authorProfilePicture = $html->find('img[data-e2e=creator-profile-userInfo-Avatar]', 0)->src ?? '';
 
         $videos = $html->find('div[data-e2e=common-videoList-VideoContainer]');
@@ -42,16 +41,44 @@ class TikTokBridge extends BridgeAbstract
             $parsedUrl = parse_url($href);
             $url = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . '/' . ltrim($parsedUrl['path'], '/');
 
-            $image = $video->find('video', 0)->poster;
+            $json = null;
+
+            // Sometimes the API fails to return data for a second, so try a few times
+            $attempts = 0;
+            do {
+                try {
+                    // Fetch the video embed data from the OEmbed API
+                    $json = getContents('https://www.tiktok.com/oembed?url=' . $url);
+                } catch (HttpException $e) {
+                    $attempts++;
+                    // Sleep 0.1s
+                    usleep(100000);
+                    continue;
+                }
+                break;
+            } while ($attempts < 3);
+
+            if ($json) {
+                $videoEmbedData = json_decode($json);
+            } else {
+                $videoEmbedData = new \stdClass();
+                $videoEmbedData->title = $url;
+                $videoEmbedData->thumbnail_url = '';
+                $videoEmbedData->author_unique_id = '';
+            }
+
+            $title = $videoEmbedData->title;
+            $image = $videoEmbedData->thumbnail_url;
             $views = $video->find('div[data-e2e=common-Video-Count]', 0)->plaintext;
 
             $enclosures = [$image, $authorProfilePicture];
 
             $item['uri'] = $url;
-            $item['title'] = 'Video';
-            $item['author'] = '@' . $author;
+            $item['title'] = $title;
+            $item['author'] = '@' . $videoEmbedData->author_unique_id;
             $item['enclosures'] = $enclosures;
             $item['content'] = <<<EOD
+<p>$title</p>
 <a href="{$url}"><img src="{$image}"/></a>
 <p>{$views} views<p><br/>
 EOD;

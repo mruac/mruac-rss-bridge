@@ -192,16 +192,22 @@ class GithubIssueBridge extends BridgeAbstract
 
     public function collectData()
     {
-        $html = getSimpleHTMLDOM($this->getURI());
+        $url = $this->getURI();
+        $html = getSimpleHTMLDOM($url);
 
         switch ($this->queriedContext) {
             case static::BRIDGE_OPTIONS[1]: // Issue comments
                 $this->items = $this->extractIssueComments($html);
                 break;
             case static::BRIDGE_OPTIONS[0]: // Project Issues
-                foreach ($html->find('.js-active-navigation-container .js-navigation-item') as $issue) {
-                    $info = $issue->find('.opened-by', 0);
+                // PRs
+                $issues = $html->find('.js-active-navigation-container .js-navigation-item');
+                if (!$issues) {
+                    // Issues
+                    $issues = $html->find('.IssueRow-module__row--XmR1f');
+                }
 
+                foreach ($issues as $issue) {
                     preg_match('/\/([0-9]+)$/', $issue->find('a', 0)->href, $match);
                     $issueNbr = $match[1];
 
@@ -211,6 +217,7 @@ class GithubIssueBridge extends BridgeAbstract
                     if ($this->getInput('c')) {
                         $uri = static::URI . $this->getInput('u')
                          . '/' . $this->getInput('p') . '/' . static::URL_PATH . '/' . $issueNbr;
+
                         $issue = getSimpleHTMLDOMCached($uri, static::CACHE_TIMEOUT);
                         if ($issue) {
                             $this->items = array_merge(
@@ -222,24 +229,34 @@ class GithubIssueBridge extends BridgeAbstract
                         $item['content'] = 'Can not extract comments from ' . $uri;
                     }
 
-                    $item['author'] = $info->find('a', 0)->plaintext;
-                    $item['timestamp'] = strtotime(
-                        $info->find('relative-time', 0)->getAttribute('datetime')
-                    );
-                    $item['title'] = html_entity_decode(
-                        $issue->find('.js-navigation-open', 0)->plaintext,
-                        ENT_QUOTES,
-                        'UTF-8'
-                    );
+                    $item['author'] = $issue->find('a', 1)->plaintext;
 
-                    $comment_count = 0;
-                    if ($span = $issue->find('a[aria-label*="comment"] span', 0)) {
-                        $comment_count = $span->plaintext;
+                    $time = $issue->find('relative-time', 0);
+                    $datetime = $time->getAttribute('datetime');
+                    if ($datetime) {
+                        $item['timestamp'] = strtotime($datetime);
                     }
 
-                    $item['content'] .= "\n" . 'Comments: ' . $comment_count;
+                    $item['title'] = '';
+
+                    # Works for PRs
+                    $title = $issue->find('a.Link--primary', 0);
+                    if ($title) {
+                        $item['title'] = html_entity_decode($title->plaintext, ENT_QUOTES, 'UTF-8');
+                    }
+
+                    $title2 = $issue->find('h3 a', 0);
+                    if ($title2) {
+                        $item['title'] = html_entity_decode($title2->plaintext, ENT_QUOTES, 'UTF-8');
+                    }
+                    //$comment_count = 0;
+                    //if ($span = $issue->find('a[aria-label*="comment"] span', 0)) {
+                    //    $comment_count = $span->plaintext;
+                    //}
+
+                    //$item['content'] .= "\n" . 'Comments: ' . $comment_count;
                     $item['uri'] = self::URI
-                             . trim($issue->find('.js-navigation-open', 0)->getAttribute('href'), '/');
+                             . trim($issue->find('a', 0)->getAttribute('href'), '/');
                     $this->items[] = $item;
                 }
                 break;
