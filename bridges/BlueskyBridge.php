@@ -64,12 +64,6 @@ class BlueskyBridge extends BridgeAbstract
                 ],
             ],
 
-            'include_reposts' => [
-                'name' => 'Include Reposts?',
-                'type' => 'checkbox',
-                'defaultValue' => 'checked'
-            ],
-
             'include_reply_context' => [
                 'name' => 'Include Reply context?',
                 'type' => 'checkbox',
@@ -178,7 +172,6 @@ class BlueskyBridge extends BridgeAbstract
         ) {
             $url = $this->getInput('url');
             $filter = $this->getInput('feed_filter') ?: 'posts_with_replies';
-            $includeReposts = $this->getInput('include_reposts');
             $replyContext = $this->getInput('include_reply_context');
 
             $feedMatch =        preg_match('/^http(?:s|):\/\/bsky.app\/profile\/(?:(?<domain>[\w\-\.]+\.[\w\-]+)|(?<did>did:plc:\w+))\/feed\/(?<key>\w+)$/', $url, $feedMatches);
@@ -230,9 +223,6 @@ EOD);
                 $feed = $this->getListFeed($listUri);
             }
             foreach ($feed['feed'] as $post) {
-                if ($includeReposts && isset($post['reason']) && str_contains($post['reason']['$type'], 'reasonRepost')) {
-                    continue;
-                }
                 if (!$this->checkPostFilter($post, $filter)) {
                     continue;
                 }
@@ -263,7 +253,7 @@ EOD);
             $authorFeed = $this->getAuthorFeed($did, $filter);
 
             foreach ($authorFeed['feed'] as $post) {
-                if ($includeReposts && isset($post['reason']) && str_contains($post['reason']['$type'], 'reasonRepost')) {
+                if (!$includeReposts && isset($post['reason']) && str_contains($post['reason']['$type'], 'reasonRepost')) {
                     continue;
                 }
                 $this->items[] = $this->createFeedItem($post, $replyContext);
