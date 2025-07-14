@@ -962,7 +962,9 @@ class FurAffinityBridge extends BridgeAbstract
                     foreach ($submissionHTML->find('.tags-row .tags a') as $keyword) {
                         $item['categories'][] = $keyword->plaintext;
                     }
-                    $item['categories'] = array_filter($item['categories']);
+                    if (isset($item['categories'])) {
+                        $item['categories'] = array_values(array_filter($item['categories']));
+                    }
 
                     $previewSrc = $submissionHTML->find('#submissionImg', 0)
                         ->{'data-preview-src'};
@@ -973,6 +975,13 @@ class FurAffinityBridge extends BridgeAbstract
                     if ($this->isOldUI($submissionHTML)) {
                         $description = $submissionHTML->find('.maintable', 1);
                         $description = $description ? $description->find('td', 3) : null;
+                        foreach ($submissionHTML->find('#keywords a') as $keyword) {
+                            $item['categories'][] = $keyword->plaintext;
+                        }
+                        if (isset($item['categories'])) {
+                            $item['categories'] = array_values(array_filter($item['categories']));
+                        }
+    
                     } else {
                         $description = $submissionHTML->find('div.submission-description', 0);
                     }

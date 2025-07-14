@@ -174,7 +174,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             //submission / journal comments / shouts notification
             if ($comments) {
                 if ($oldUI) {
-                    $current_user = substr(trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00'), 1);
+                    $current_user = trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00');
 
                     $limit = self::LIMIT;
                     foreach ($html->find('fieldset#messages-comments-submission li') as $submission_comment) {
@@ -539,7 +539,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
 
             $item['title'] = $html->find('#columnpage .section-header .journal-title', 0)->plaintext;
             $item['timestamp'] = $html->find('#columnpage .section-header .popup_date', 0)->getAttribute('title');
-            $item['author'] = substr(trim($html->find('username', 0)->plaintext, ' \\n\n\r\t\v\x00'), 1);
+            $item['author'] = trim($html->find('username .js-displayName-block', 0)->plaintext, ' \\n\n\r\t\v\x00');
             $item['content'] = $content;
         }
 
@@ -605,7 +605,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
         } else {
             $item['title'] = trim($html->find('.submission-title', 0)->plaintext); // Title of the item
             $item['timestamp'] = $html->find('.submission-id-sub-container .popup_date', 0)->getAttribute('title');        // Timestamp of the item in numeric or text format (compatible for strtotime())
-            $item['author'] = $html->find('.submission-id-sub-container strong', 0)->plaintext; // Name of the author for this item
+            $item['author'] = $html->find('.submission-id-sub-container .c-usernameBlockSimple', 0)->plaintext; // Name of the author for this item
             $item['content'] .= $this->formatComment($html->find('.submission-description', 0)); // Content in HTML format
             $item['content'] .= '<hr/><b>Tags:</b><br/>';
             foreach ($html->find('.section-body .tags a') as $tag) {
@@ -622,7 +622,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
 
         $current_user = null;
         if ($isOldUI) {
-            $current_user = substr(trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00'), 1);
+            $current_user = trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00');
         } else {
             $current_user = $html->find('.loggedin_user_avatar', 0);
             $current_user = $current_user ? $current_user->getAttribute('alt') : null;
