@@ -174,9 +174,9 @@ class BlueskyBridge extends BridgeAbstract
             $filter = $this->getInput('feed_filter') ?: 'posts_with_replies';
             $replyContext = $this->getInput('include_reply_context');
 
-            $feedMatch =        preg_match('/^http(?:s|):\/\/bsky.app\/profile\/(?:(?<domain>[\w\-\.]+\.[\w\-]+)|(?<did>did:plc:\w+))\/feed\/(?<key>\w+)$/', $url, $feedMatches);
-            $listMatch =        preg_match('/^http(?:s|):\/\/bsky.app\/profile\/(?:(?<domain>[\w\-\.]+\.[\w\-]+)|(?<did>did:plc:\w+))\/lists\/(?<key>\w+)$/', $url, $listMatches);
-            $starterPackMatch = preg_match('/^http(?:s|):\/\/bsky.app\/starter-pack\/(?:(?<domain>[\w\-\.]+\.[\w\-]+)|(?<did>did:plc:\w+))\/(?<key>\w+)$/', $url, $starterPackMatches);
+            $feedMatch =        preg_match('/^http(?:s|):\/\/bsky.app\/profile\/(?:(?<domain>[\w\-\.]+\.[\w\-]+)|(?<did>did:plc:\w+))\/feed\/(?<key>[\w\-]+)$/', $url, $feedMatches);
+            $listMatch =        preg_match('/^http(?:s|):\/\/bsky.app\/profile\/(?:(?<domain>[\w\-\.]+\.[\w\-]+)|(?<did>did:plc:\w+))\/lists\/(?<key>[\w\-]+)$/', $url, $listMatches);
+            $starterPackMatch = preg_match('/^http(?:s|):\/\/bsky.app\/starter-pack\/(?:(?<domain>[\w\-\.]+\.[\w\-]+)|(?<did>did:plc:\w+))\/(?<key>[\w\-]+)$/', $url, $starterPackMatches);
 
             if (!$feedMatch && !$listMatch && !$starterPackMatch) {
                 returnClientError(<<<EOD
