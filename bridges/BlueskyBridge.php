@@ -600,7 +600,7 @@ EOD);
         $videoMime = $video['mimeType'];
         $thumbnail = "poster=\"https://video.bsky.app/watch/$authorDID/$videoCID/thumbnail.jpg\"" ?? '';
         $videoURL = "https://bsky.social/xrpc/com.atproto.sync.getBlob?did=$authorDID&cid=$videoCID";
-        return "<figure><video loop $thumbnail controls src=\"$videoURL\" type=\"$videoMime\"/></figure>";
+        return "<figure><video loop $thumbnail preload=\"none\" controls src=\"$videoURL\" type=\"$videoMime\"/></figure>";
     }
 
     private function getPostImageDescription(array $image)
