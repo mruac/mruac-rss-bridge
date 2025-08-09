@@ -23,12 +23,10 @@ class HttpException extends \Exception
     public static function fromResponse(Response $response, string $url): HttpException
     {
         $message = sprintf(
-            '%s resulted in %s %s %s',
+            '%s resulted in %s %s',
             $url,
             $response->getCode(),
-            $response->getStatusLine(),
-            // If debug, include a part of the response body in the exception message
-            Debug::isEnabled() ? mb_substr($response->getBody(), 0, 500) : '',
+            $response->getStatusLine()
         );
         if (CloudFlareException::isCloudFlareResponse($response)) {
             return new CloudFlareException($message, $response->getCode(), $response);
@@ -227,7 +225,7 @@ final class Request
         return $this->get[$key] ?? $default;
     }
 
-    public function server(string $key, string $default = null): ?string
+    public function server(string $key, ?string $default = null): ?string
     {
         return $this->server[$key] ?? $default;
     }
