@@ -24,6 +24,13 @@ function getContents(
 
     // TODO: consider url validation at this point
 
+    $config = [
+        'useragent'     => Configuration::getConfig('http', 'useragent'),
+        'timeout'       => Configuration::getConfig('http', 'timeout'),
+        'retries'       => Configuration::getConfig('http', 'retries'),
+        'curl_options'  => $curlOptions,
+    ];
+
     $httpHeadersNormalized = [];
     foreach ($httpHeaders as $httpHeader) {
         $parts = explode(':', $httpHeader);
@@ -57,25 +64,7 @@ function getContents(
         }
     }
 
-    // Snagged from https://github.com/lwthiker/curl-impersonate/blob/main/firefox/curl_ff102
-    $defaultHttpHeaders = [
-        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language' => 'en-US,en;q=0.5',
-        'Upgrade-Insecure-Requests' => '1',
-        'Sec-Fetch-Dest' => 'document',
-        'Sec-Fetch-Mode' => 'navigate',
-        'Sec-Fetch-Site' => 'none',
-        'Sec-Fetch-User' => '?1',
-        'TE' => 'trailers',
-    ];
-
-    $config = [
-        'useragent' => Configuration::getConfig('http', 'useragent'),
-        'timeout' => Configuration::getConfig('http', 'timeout'),
-        'retries' => Configuration::getConfig('http', 'retries'),
-        'headers' => array_merge($defaultHttpHeaders, $httpHeadersNormalized),
-        'curl_options' => $curlOptions,
-    ];
+    $config['headers'] = $httpHeadersNormalized;
 
     $maxFileSize = Configuration::getConfig('http', 'max_filesize');
     if ($maxFileSize) {
@@ -176,10 +165,8 @@ function getSimpleHTMLDOM(
 }
 
 /**
- * Gets contents from the Internet as simplhtmldom object. Contents are cached
+ * Fetch contents from the Internet as simplhtmldom object. Contents are cached
  * and re-used for subsequent calls until the cache duration elapsed.
- *
- * _Notice_: Cached contents are forcefully removed after 24 hours (86400 seconds).
  *
  * @param string $url The URL.
  * @param int $ttl Cache duration in seconds.

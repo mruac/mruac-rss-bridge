@@ -53,7 +53,7 @@ class GolemBridge extends FeedExpander
         ]
     ]];
     const LIMIT = 5;
-    const HEADERS = ['Cookie: golem_consent20=simple|220101;'];
+    const HEADERS = ['Cookie: golem_consent20=simple|250101;'];
 
     public function collectData()
     {
@@ -152,7 +152,7 @@ class GolemBridge extends FeedExpander
             $img->src = $img->getAttribute('data-src-full');
         }
 
-        foreach ($content->find('p, h1, h2, h3, img[src*="."], iframe, video') as $element) {
+        foreach ($content->find('p, h1, h2, h3, pre, img[src*="."], div[class*="golem_tablediv"], iframe, video') as $element) {
             $item .= $element;
         }
 

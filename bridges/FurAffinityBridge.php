@@ -920,7 +920,9 @@ class FurAffinityBridge extends BridgeAbstract
                 break;
             }
 
-            $item = [];
+            $item = [
+                'categories' => [],
+            ];
 
             $submissionURL = $figure->find('b u a', 0)->href;
             $imgURL = $figure->find('b u a img', 0)->src;
@@ -936,8 +938,7 @@ class FurAffinityBridge extends BridgeAbstract
             if ($this->getInput('full') === true) {
                 $submissionHTML = $this->getFASimpleHTMLDOM($submissionURL, $cache);
                 if (!$this->isHiddenSubmission($submissionHTML)) {
-                    $stats = $submissionHTML->find('.stats-container', 0);
-                    $popupDate = $stats->find('.popup_date', 0);
+                    $popupDate = $submissionHTML->find('section .popup_date', 0);
                     if ($popupDate) {
                         $item['timestamp'] = strtotime($popupDate->title);
                     }
@@ -947,9 +948,10 @@ class FurAffinityBridge extends BridgeAbstract
                         $item['enclosures'] = [$var->href];
                     }
 
-                    foreach ($stats->find('#keywords a') as $keyword) {
+                    foreach ($submissionHTML->find('.tags-row .tags a') as $keyword) {
                         $item['categories'][] = $keyword->plaintext;
                     }
+                    $item['categories'] = array_filter($item['categories']);
 
                     $previewSrc = $submissionHTML->find('#submissionImg', 0);
                     if ($previewSrc) {

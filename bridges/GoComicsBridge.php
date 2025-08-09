@@ -2,7 +2,8 @@
 
 class GoComicsBridge extends BridgeAbstract
 {
-    const MAINTAINER = 'sky';
+    const MAINTAINER = 'TReKiE';
+    //const MAINTAINER = 'sky';
     const NAME = 'GoComics Unofficial RSS';
     const URI = 'https://www.gocomics.com/';
     const CACHE_TIMEOUT = 21600; // 6h
@@ -13,32 +14,61 @@ class GoComicsBridge extends BridgeAbstract
             'type' => 'text',
             'exampleValue' => 'heartofthecity',
             'required' => true
+        ],
+        'date-in-title' => [
+            'name' => 'Add date and full name to each day\'s title',
+            'type' => 'checkbox',
+            'title' => 'Adds the date and the full name into the title of each day\'s comic',
+        ],
+        'limit' => [
+            'name' => 'Limit',
+            'type' => 'number',
+            'title' => 'The number of recent comics to get',
+            'defaultValue' => 5
         ]
     ]];
 
     public function collectData()
     {
-        $html = getSimpleHTMLDOM($this->getURI());
+        $link = $this->getURI();
+        $landingpage = getSimpleHTMLDOM($link);
+        $element = $landingpage->find('div[data-post-url]', 0);
+        if ($element) {
+            $link = $element->getAttribute('data-post-url');
+        } else { // fallback for comics without data-post-url (assumes daily comic)
+            $nextcomiclink = $landingpage->find('a[class*="ComicNavigation_controls__button_previous__"]', 0)->href;
+            preg_match('/(\d{4}\/\d{2}\/\d{2})/', $nextcomiclink, $nclmatches);
+            if (!empty($nclmatches[1])) {
+                $nextdate = new DateTime($nclmatches[1]);
+                $nextdate = $nextdate->modify('+1 day')->format('Y/m/d');
+                $link = $link . '/' . $nextdate;
+            } else {
+                throw new \Exception('Could not find the first comic URL. Please create a new GitHub issue.');
+            }
+        }
 
-        //Get info from first page
-        $author = preg_replace('/By /', '', $html->find('.media-subheading', 0)->plaintext);
+        for ($i = 0; $i < $this->getInput('limit'); $i++) {
+            $html = getSimpleHTMLDOM($link);
 
-        $link = self::URI . $html->find('.gc-deck--cta-0', 0)->find('a', 0)->href;
-        for ($i = 0; $i < 5; $i++) {
+            $imagelink = $html->find('meta[property="og:image"]', 0)->content;
+            $parts = explode('/', $link);
+            $date = DateTime::createFromFormat('Y/m/d', implode('/', array_slice($parts, -3)));
+            $title = $html->find('meta[property="og:title"]', 0)->content;
+            preg_match('/by (.*?) for/', $title, $authormatches);
+            $author = $authormatches[1] ?? 'GoComics';
+
             $item = [];
-
-            $page = getSimpleHTMLDOM($link);
-            $imagelink = $page->find('.comic.container', 0)->getAttribute('data-image');
-            $date = explode('/', $link);
-
             $item['id'] = $imagelink;
             $item['uri'] = $link;
             $item['author'] = $author;
             $item['title'] = 'GoComics ' . $this->getInput('comicname');
-            $item['timestamp'] = DateTime::createFromFormat('Ymd', $date[5] . $date[6] . $date[7])->getTimestamp();
+            if ($this->getInput('date-in-title') === true) {
+                $item['title'] = $title;
+            }
+            $item['timestamp'] = $date->setTime(0, 0, 0)->getTimestamp();
             $item['content'] = '<img src="' . $imagelink . '" />';
 
-            $link = self::URI . $page->find('.js-previous-comic', 0)->href;
+            $link = rtrim(self::URI, '/') . $html->find('a[class*="ComicNavigation_controls__button_previous__"]', 0)->href;
             $this->items[] = $item;
         }
     }
