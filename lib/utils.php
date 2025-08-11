@@ -251,3 +251,8 @@ function returnServerError($message)
 {
     throw new \Exception($message, 500);
 }
+
+function redirectBridge($parms){
+    header('Location: ' . get_home_page_url() . '?' . http_build_query($parms), true, 301);
+    exit();
+}
