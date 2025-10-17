@@ -604,7 +604,7 @@ class FurAffinityBridge extends BridgeAbstract
     /*
      * This was aquired by creating a new user on FA then
      * extracting the cookie from the browsers dev console.
-     * 
+     *
      * Alternatively, set values of "a" and "b" cookies as "aCookie" and "bCookie"
      * respectively, in config.ini.php's Bridge specific configurations.
      */
@@ -927,6 +927,8 @@ class FurAffinityBridge extends BridgeAbstract
     {
         $cache = ($this->getInput('cache') === true);
 
+        $blockedTags = explode(' ', $html->find('body', 0)?->{'data-tag-blocklist'} ?? '');
+
         foreach ($html->find('section.gallery figure') as $figure) {
             # allows limit = -1 to mean 'unlimited'
             if ($limit-- === 0) {
@@ -938,7 +940,15 @@ class FurAffinityBridge extends BridgeAbstract
             ];
 
             $submissionURL = $figure->find('b u a', 0)->href;
-            $imgURL = $figure->find('b u a img', 0)->src;
+            $imgEl = $figure->find('b u a img', 0);
+            $imgURL = $imgEl->src;
+
+            if (
+                !empty($imgEl->{'data-tags'}) &&
+                !empty(array_intersect($blockedTags, explode(' ', $imgEl->{'data-tags'}))) > 0
+            ) {
+                continue;
+            }
 
             $item['uri'] = $submissionURL;
             $item['title'] = html_entity_decode(
@@ -968,10 +978,17 @@ class FurAffinityBridge extends BridgeAbstract
                         $item['categories'] = array_values(array_filter($item['categories']));
                     }
 
-                    $previewSrc = $submissionHTML->find('#submissionImg', 0)
-                        ->{'data-preview-src'};
+                    $previewEl = $submissionHTML->find('#submissionImg', 0);
+                    $previewSrc = $previewEl->{'data-preview-src'};
                     if ($previewSrc) {
                         $imgURL = 'https:' . $previewSrc;
+                    }
+
+                    if (
+                        !empty($previewEl->{'data-tags'}) &&
+                        !empty(array_intersect($blockedTags, explode(' ', $previewEl->{'data-tags'}))) > 0
+                    ) {
+                        continue;
                     }
 
                     if ($this->isOldUI($submissionHTML)) {
@@ -983,7 +1000,6 @@ class FurAffinityBridge extends BridgeAbstract
                         if (isset($item['categories'])) {
                             $item['categories'] = array_values(array_filter($item['categories']));
                         }
-    
                     } else {
                         $description = $submissionHTML->find('div.submission-description', 0);
                     }
