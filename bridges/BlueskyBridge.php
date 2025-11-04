@@ -287,7 +287,7 @@ EOD);
         $postRecord = $post['post']['record'];
 
         $item = [];
-        $item['uri'] = self::URI . '/profile/' . $this->fallbackAuthor($post['post']['author'], 'url') . '/post/' . explode('app.bsky.feed.post/', $post['post']['uri'])[1];
+        $item['uri'] = self::URI . '/profile/' . $post['post']['author']['did'] . '/post/' . explode('app.bsky.feed.post/', $post['post']['uri'])[1];
         $item['title'] = $this->getInput('verbose_title') ? $this->generateVerboseTitle($post) : strtok($postRecord['text'], "\n");
         $item['timestamp'] = strtotime($postRecord['createdAt']);
         $item['author'] = $this->fallbackAuthor($post['post']['author'], 'display');
@@ -393,7 +393,7 @@ EOD);
 
                 $parts = explode('/', $quotedRecord['uri']);
                 $quotedPostId = end($parts);
-                $quotedPostUri = self::URI . '/profile/' . $this->fallbackAuthor($quotedRecord['author'], 'url') . '/post/' . $quotedPostId;
+                $quotedPostUri = self::URI . '/profile/' . $quotedRecord['author']['did'] . '/post/' . $quotedPostId;
 
                 //quoted post - post
                 $description .= $this->getPostDescription(
@@ -465,7 +465,7 @@ EOD);
                 $replyPostAuthorHandle = $replyPost['author']['handle'] !== 'handle.invalid' ? '<i>@' . $replyPost['author']['handle'] . '</i>' : '';
                 $replyPostDisplayName = $replyPost['author']['displayName'] ?? '';
                 $replyPostDisplayName = e($replyPostDisplayName);
-                $replyPostUri = self::URI . '/profile/' . $this->fallbackAuthor($replyPost['author'], 'url') . '/post/' . explode('app.bsky.feed.post/', $replyPost['uri'])[1];
+                $replyPostUri = self::URI . '/profile/' . $replyPost['author']['did'] . '/post/' . explode('app.bsky.feed.post/', $replyPost['uri'])[1];
 
                 // reply post
                 $description .= $this->getPostDescription(
@@ -552,7 +552,7 @@ EOD);
 
                         $parts = explode('/', $replyQuotedRecord['uri']);
                         $quotedPostId = end($parts);
-                        $quotedPostUri = self::URI . '/profile/' . $this->fallbackAuthor($replyQuotedRecord['author'], 'url') . '/post/' . $quotedPostId;
+                        $quotedPostUri = self::URI . '/profile/' . $replyQuotedRecord['author']['did'] . '/post/' . $quotedPostId;
 
                         //quoted post - post
                         $description .= $this->getPostDescription(
