@@ -174,7 +174,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             //submission / journal comments / shouts notification
             if ($comments) {
                 if ($oldUI) {
-                    $current_user = trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00');
+                    $current_user = trim($html->find('#my-username', 0)->plaintext);
 
                     $limit = self::LIMIT;
                     foreach ($html->find('fieldset#messages-comments-submission li') as $submission_comment) {
@@ -525,9 +525,25 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             $item['author'] = $html->find('td.cat .journal-title-box a', 0)->plaintext;
             $item['content'] = $content;
         } else {
+            $rating = $html->find('#columnpage #c-journalTitleTop__contentRating', 0)->plaintext;
             $header = $this->formatComment($html->find('#columnpage .journal-header', 0));
             $content = $this->formatComment($html->find('#columnpage .journal-content-container', 0));
             $footer = $this->formatComment($html->find('#columnpage .journal-footer', 0));
+
+            switch ($rating) {
+                case 'General':
+                    $rating = '(G)';
+                    break;
+                case 'Mature':
+                    $rating = '(M)';
+                    break;
+                case 'Adult':
+                    $rating = '(A)';
+                    break;
+                default:
+                    $rating = '(?)';
+                    break;
+            }
 
             if (!is_null($header)) {
                 $header .= '</hr>';
@@ -537,9 +553,9 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             }
             $content = $header . $content . $footer;
 
-            $item['title'] = $html->find('#columnpage .section-header .journal-title', 0)->plaintext;
+            $item['title'] = $html->find('#columnpage #c-journalTitleTop', 0)->plaintext . ' ' . $rating;
             $item['timestamp'] = $html->find('#columnpage .section-header .popup_date', 0)->getAttribute('title');
-            $item['author'] = trim($html->find('username .js-displayName-block', 0)->plaintext, ' \\n\n\r\t\v\x00');
+            $item['author'] = trim($html->find('username .js-displayName-block', 0)->plaintext);
             $item['content'] = $content;
         }
 
@@ -622,7 +638,7 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
 
         $current_user = null;
         if ($isOldUI) {
-            $current_user = trim($html->find('#my-username', 0)->plaintext, ' \\n\n\r\t\v\x00');
+            $current_user = trim($html->find('#my-username', 0)->plaintext);
         } else {
             $current_user = $html->find('.loggedin_user_avatar', 0);
             $current_user = $current_user ? $current_user->getAttribute('alt') : null;
