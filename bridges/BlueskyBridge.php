@@ -645,9 +645,9 @@ EOD);
             $postType = isset($postRecord['reply']) ? "reply" : "post";
             $description .= "<a href=\"$postUri\">Quoted $postType</a> from <b>$postDisplayName</b> $postAuthorHandle:<br>";
         } elseif ($type === "reply") {
-            // Replying to aaa @aaa.com"s post/reply:
+            // Replying to aaa @aaa.com's post/reply:
             $postType = isset($postRecord['reply']) ? "reply" : "post";
-            $description .= "Replying to <b>$postDisplayName</b> $postAuthorHandle\"s <a href=\"$postUri\">$postType</a>:<br>";
+            $description .= "Replying to <b>$postDisplayName</b> $postAuthorHandle's <a href=\"$postUri\">$postType</a>:<br>";
         } else {
             // aaa @aaa.com posted/replied:
             $postType = isset($postRecord['reply']) ? "replied" : "posted";
@@ -791,6 +791,7 @@ EOD);
     private function getAuthorFeed($did, $filter)
     {
         $url = "https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=" . urlencode($did) . "&filter=" . urlencode($filter) . "&limit=30";
+        $url = preg_replace('/xrpc\.bsky/', 'xrpc/app.bsky', $url, 1); //slash to period check fix attempt
         if (Debug::isEnabled()) {
             $this->logger->debug($url);
         }
