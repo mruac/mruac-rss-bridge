@@ -620,9 +620,9 @@ class FurAffinityNotificationsBridge extends BridgeAbstract
             }
         } else {
             $item['title'] = trim($html->find('.submission-title', 0)->plaintext); // Title of the item
-            $item['timestamp'] = $html->find('.submission-id-sub-container .popup_date', 0)->getAttribute('title');        // Timestamp of the item in numeric or text format (compatible for strtotime())
-            $item['author'] = $html->find('.submission-id-sub-container .c-usernameBlockSimple', 0)->plaintext; // Name of the author for this item
-            $item['content'] .= $this->formatComment($html->find('.submission-description', 0)); // Content in HTML format
+            $item['timestamp'] = $html->find('.submission-details .popup_date', 0)->getAttribute('data-time');        // Timestamp of the item in numeric or text format (compatible for strtotime())
+            $item['author'] = $html->find('.submission-details .c-usernameBlockSimple', 0)->plaintext; // Name of the author for this item
+            $item['content'] .= $this->formatComment($html->find('.submission-description-text', 0)); // Content in HTML format
             $item['content'] .= '<hr/><b>Tags:</b><br/>';
             foreach ($html->find('.section-body .tags a') as $tag) {
                 $item['content'] .= "{$tag->outertext} ";

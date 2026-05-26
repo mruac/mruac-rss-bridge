@@ -966,7 +966,7 @@ class FurAffinityBridge extends BridgeAbstract
                         $item['timestamp'] = strtotime($popupDate->title);
                     }
 
-                    $var = $submissionHTML->find('.actions a[href^=https://d.facdn]', 0);
+                    $var = $submissionHTML->find('a.button[href^="//d.furaffinity"]', 0);
                     if ($var) {
                         $item['enclosures'] = [$var->href];
                     }
@@ -1001,7 +1001,7 @@ class FurAffinityBridge extends BridgeAbstract
                             $item['categories'] = array_values(array_filter($item['categories']));
                         }
                     } else {
-                        $description = $submissionHTML->find('div.submission-description', 0);
+                        $description = $submissionHTML->find('div.submission-description-text', 0);
                     }
                     if ($description) {
                         $this->setReferrerPolicy($description);
