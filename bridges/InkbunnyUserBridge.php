@@ -493,10 +493,9 @@ class InkbunnyUserBridge extends BridgeAbstract
 
     private function getData(string $url, bool $cache = false, array $httpHeaders = [], array $curlOptions = [], bool $getJSON = true)
     {
-        Debug::log($url);
         if ($getJSON) { //get JSON object
             if ($cache) {
-                $data = $this->loadCacheValue($url, 86400); // 24 hours
+                $data = $this->loadCacheValue($url);
                 if (is_null($data)) {
                     $data = getContents($url, $httpHeaders, $curlOptions) or returnServerError("Could not load $url");
                     $this->saveCacheValue($url, $data);
@@ -507,7 +506,7 @@ class InkbunnyUserBridge extends BridgeAbstract
             return json_decode($data, true);
         } else { //get simpleHTMLDOM object
             if ($cache) {
-                $html = getSimpleHTMLDOMCached($url, 86400); // 24 hours
+                $html = getSimpleHTMLDOMCached($url);
             } else {
                 $html = getSimpleHTMLDOM($url);
             }
