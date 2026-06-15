@@ -327,13 +327,14 @@ EOD);
 
             //post images
             if (
+                $postRecord['embed']['$type'] === "app.bsky.embed.gallery" || // new in v1.123; hard limit 20 img, vid incl TBD 
                 $postRecord['embed']['$type'] === "app.bsky.embed.images" ||
                 (
                     $postRecord['embed']['$type'] === "app.bsky.embed.recordWithMedia" &&
                     $postRecord['embed']['media']['$type'] === "app.bsky.embed.images"
                 )
             ) {
-                $images = $post['post']['embed']['images'] ?? $post['post']['embed']['media']['images'];
+                $images = $post['post']['embed']['items'] ?? $post['post']['embed']['images'] ?? $post['post']['embed']['media']['images'];
                 foreach ($images as $image) {
                     $description .= $this->getPostImageDescription($image);
                 }
@@ -426,6 +427,7 @@ EOD);
 
                     //quoted post - post images
                     if (
+                        $quotedRecord['value']['embed']['$type'] === "app.bsky.embed.gallery" ||
                         $quotedRecord['value']['embed']['$type'] === "app.bsky.embed.images" ||
                         (
                             $quotedRecord['value']['embed']['$type'] === "app.bsky.embed.recordWithMedia" &&
@@ -434,10 +436,11 @@ EOD);
                     ) {
                         foreach ($quotedRecord['embeds'] as $embed) {
                             if (
-                                $embed['$type'] === "app.bsky.embed.images#view" ||
-                                ($embed['$type'] === "app.bsky.embed.recordWithMedia#view" && $embed['media']['$type'] === "app.bsky.embed.images#view")
+                                $embed['$type'] === "app.bsky.embed.gallery#view" || // ['items']
+                                $embed['$type'] === "app.bsky.embed.images#view" || // ['images']
+                                ($embed['$type'] === "app.bsky.embed.recordWithMedia#view" && $embed['media']['$type'] === "app.bsky.embed.images#view") // ['media']['images']
                             ) {
-                                $images = $embed['images'] ?? $embed['media']['images'];
+                                $images = $embed['items'] ?? $embed['images'] ?? $embed['media']['images'];
                                 foreach ($images as $image) {
                                     $description .= $this->getPostImageDescription($image);
                                 }
@@ -489,13 +492,14 @@ EOD);
 
                     //post images
                     if (
+                        $replyPostRecord['embed']['$type'] === "app.bsky.embed.gallery" ||
                         $replyPostRecord['embed']['$type'] === "app.bsky.embed.images" ||
                         (
                             $replyPostRecord['embed']['$type'] === "app.bsky.embed.recordWithMedia" &&
                             $replyPostRecord['embed']['media']['$type'] === "app.bsky.embed.images"
                         )
                     ) {
-                        $images = $replyPost['embed']['images'] ?? $replyPost['embed']['media']['images'];
+                        $images = $replyPost['post']['embed']['items'] ?? $replyPost['post']['embed']['images'] ?? $replyPost['post']['embed']['media']['images'];
                         foreach ($images as $image) {
                             $description .= $this->getPostImageDescription($image);
                         }
@@ -585,6 +589,7 @@ EOD);
 
                             //quoted post - post images
                             if (
+                                $replyQuotedRecord['value']['embed']['$type'] === "app.bsky.embed.gallery" ||
                                 $replyQuotedRecord['value']['embed']['$type'] === "app.bsky.embed.images" ||
                                 (
                                     $replyQuotedRecord['value']['embed']['$type'] === "app.bsky.embed.recordWithMedia" &&
@@ -593,10 +598,11 @@ EOD);
                             ) {
                                 foreach ($replyQuotedRecord['embeds'] as $embed) {
                                     if (
+                                        $embed['$type'] === "app.bsky.embed.gallery#view" ||
                                         $embed['$type'] === "app.bsky.embed.images#view" ||
                                         ($embed['$type'] === "app.bsky.embed.recordWithMedia#view" && $embed['media']['$type'] === "app.bsky.embed.images#view")
                                     ) {
-                                        $images = $embed['images'] ?? $embed['media']['images'];
+                                        $images = $embed['items'] ?? $embed['images'] ?? $embed['media']['images'];
                                         foreach ($images as $image) {
                                             $description .= $this->getPostImageDescription($image);
                                         }
@@ -626,7 +632,7 @@ EOD);
 
     private function getPostImageDescription(array $image)
     {
-        $thumbnailUrl = $image['thumb'];
+        $thumbnailUrl = $image['thumb'] ?? $image['thumbnail'];
         $fullsizeUrl = $image['fullsize'];
         $uri_parmslt = strlen($image['alt']) > 0 ? "<figcaption>" . e($image['alt']) . "</figcaption>" : "";
         return "<figure><a href=\"$fullsizeUrl\"><img src=\"$thumbnailUrl\"></a>$uri_parmslt</figure>";
