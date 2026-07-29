@@ -499,7 +499,7 @@ EOD);
                             $replyPostRecord['embed']['media']['$type'] === "app.bsky.embed.images"
                         )
                     ) {
-                        $images = $replyPost['post']['embed']['items'] ?? $replyPost['post']['embed']['images'] ?? $replyPost['post']['embed']['media']['images'];
+                        $images = $replyPost['embed']['items'] ?? $replyPost['embed']['images'] ?? $replyPost['embed']['media']['images'];
                         foreach ($images as $image) {
                             $description .= $this->getPostImageDescription($image);
                         }
