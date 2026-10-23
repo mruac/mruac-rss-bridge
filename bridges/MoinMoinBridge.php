@@ -3,7 +3,7 @@
 class MoinMoinBridge extends BridgeAbstract
 {
     const MAINTAINER = 'logmanoriginal';
-    const NAME = 'MoinMoin Bridge';
+    const NAME = 'MoinMoin';
     const URI = 'https://moinmo.in';
     const DESCRIPTION = 'Generates feeds for pages of a MoinMoin (compatible) wiki';
     const PARAMETERS = [
@@ -166,7 +166,7 @@ class MoinMoinBridge extends BridgeAbstract
     private function splitSections($html)
     {
         $content = $html->find('div#page', 0)->innertext
-            or returnServerError('Unable to find <div id="page"/>!');
+            or throwServerException('Unable to find <div id="page"/>!');
 
         $sections = [];
 

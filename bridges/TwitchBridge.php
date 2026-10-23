@@ -3,7 +3,7 @@
 class TwitchBridge extends BridgeAbstract
 {
     const MAINTAINER = 'Roliga';
-    const NAME = 'Twitch Bridge';
+    const NAME = 'Twitch';
     const URI = 'https://twitch.tv/';
     const CACHE_TIMEOUT = 300; // 5min
     const DESCRIPTION = 'Twitch channel videos';
@@ -93,13 +93,13 @@ EOD;
         $response = $this->apiRequest($query, $variables);
         $data = $response->data;
         if ($data->user === null) {
-            throw new \Exception(sprintf('Unable to find channel `%s`', $channel));
+            throwClientException(sprintf('Unable to find channel `%s`', $channel));
         }
 
         $user = $data->user;
         if ($user->videos === null) {
             // twitch regularly does this for unknown reasons
-            $this->debug->info('Twitch returned empty set of videos', ['data' => $data]);
+            $this->logger->debug('Twitch returned empty set of videos', ['data' => $data]);
             return;
         }
 

@@ -87,29 +87,32 @@ $html = getSimpleHTMLDOMCached('your URI', 86400); // Duration 24h
 
 [Defined in lib/contents.php](https://github.com/RSS-Bridge/rss-bridge/blob/master/lib/contents.php)
 
-# returnClientError
-The `returnClientError` function aborts execution of the current bridge
-and returns the given error message with error code **400**:
+# throwClientException($message = '')
+The `throwClientException` function aborts execution of the current bridge.
 
 ```PHP
-returnClientError('Your error message')
+throwClientException('Bad user input')
 ```
 
 Use this function when the user provided invalid parameter or a required parameter is missing.
 
 [Defined in lib/utils.php](https://github.com/RSS-Bridge/rss-bridge/blob/master/lib/utils.php)
 
-# returnServerError
-The `returnServerError` function aborts execution of the current bridge and returns the given error message with error code **500**:
+# throwServerException($message = '')
+The `throwServerException` function aborts execution of the current bridge.
 
 ```PHP
-returnServerError('Your error message')
+throwServerException('Received empty reply from thirdparty api')
 ```
 
 Use this function when a problem occurs that has nothing to do with the parameters provided by the user.
 (like: Host service gone missing, empty data received, etc...)
 
 [Defined in lib/utils.php](https://github.com/RSS-Bridge/rss-bridge/blob/master/lib/utils.php)
+
+# throwRateLimitException($message = '')
+
+Throws a `RateLimitException` which produces an HTTP 429 response.
 
 # defaultLinkTo
 Automatically replaces any relative URL in a given string or DOM object
@@ -339,3 +342,41 @@ Json::decode($json);
 ```
 
 [Defined in lib/utils.php](https://github.com/RSS-Bridge/rss-bridge/blob/master/lib/utils.php)
+
+# get_sitemap(string $url): array
+
+Convenience function to fetch urls from xml sitemap.
+
+```php
+$urls = get_sitemap('https://arte.sky.it/sitemap-mostre-eventi.xml');
+
+foreach ($urls as $url) {
+    $loc = $url['loc'];
+    $lastmod = $url['lastmod'];
+}
+```
+
+# handleYoutube(string $html): string
+
+Use this function to throw a YouTube link, iframe tag or video ID and get a HTML snippet that returns a normalized iframe tag or clickable image thumbnail, depending on system configuration.
+
+```php
+$result = handleYoutube('naYc5X6EL_Y');
+
+$result = handleYoutube('https://www.youtube.com/watch?v=naYc5X6EL_Y');
+
+$result = handleYoutube('https://www.youtube.com/embed/naYc5X6EL_Y');
+
+$iframe = '<iframe width="560" height="315" src="https://www.youtube.com/embed/naYc5X6EL_Y?si=abcdefgh" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+$result = handleYoutube($iframe);
+```
+
+[Defined in lib/html.php](https://github.com/RSS-Bridge/rss-bridge/blob/master/lib/html.php)
+
+## Url::normalizeScheme(string $url): string
+
+Prepend 'http://' scheme if absent.
+
+```php
+$url = Url::normalizeScheme($url);
+```

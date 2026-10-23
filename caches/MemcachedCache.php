@@ -22,7 +22,7 @@ class MemcachedCache implements CacheInterface
 
     public function get(string $key, $default = null)
     {
-        $value = $this->conn->get($key);
+        $value = $this->conn->get($this->createCacheKey($key));
         if ($value === false) {
             return $default;
         }
@@ -31,14 +31,20 @@ class MemcachedCache implements CacheInterface
 
     public function set(string $key, $value, $ttl = null): void
     {
-        $expiration = $ttl === null ? 0 : time() + $ttl;
-        $result = $this->conn->set($key, $value, $expiration);
+        if ($ttl === 0) {
+            return; // TTL is 0, do nothing
+        }
+
+        $expiration = $ttl === null ? 0 : time() + $ttl; // if ttl not provided, store forever
+        $result = $this->conn->set($this->createCacheKey($key), $value, $expiration);
         if ($result === false) {
             $this->logger->warning('Failed to store an item in memcached', [
-                'key'           => $key,
-                'code'          => $this->conn->getLastErrorCode(),
-                'message'       => $this->conn->getLastErrorMessage(),
-                'number'        => $this->conn->getLastErrorErrno(),
+                'key'            => $this->createCacheKey($key),
+                'resultCode'     => $this->conn->getResultCode(),
+                'resultMessage'  => $this->conn->getResultMessage(),
+                'errorCode'      => $this->conn->getLastErrorCode(),
+                'errorMessage'   => $this->conn->getLastErrorMessage(),
+                'errorNumber'    => $this->conn->getLastErrorErrno(),
             ]);
             // Intentionally not throwing an exception
         }
@@ -46,7 +52,7 @@ class MemcachedCache implements CacheInterface
 
     public function delete(string $key): void
     {
-        $this->conn->delete($key);
+        $this->conn->delete($this->createCacheKey($key));
     }
 
     public function clear(): void
@@ -57,5 +63,10 @@ class MemcachedCache implements CacheInterface
     public function prune(): void
     {
         // memcached manages pruning on its own
+    }
+
+    private function createCacheKey(string $key): string
+    {
+        return hash('sha1', $key);
     }
 }

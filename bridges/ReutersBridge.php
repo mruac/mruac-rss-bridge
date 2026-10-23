@@ -3,7 +3,7 @@
 class ReutersBridge extends BridgeAbstract
 {
     const MAINTAINER = 'hollowleviathan, spraynard, csisoap';
-    const NAME = 'Reuters Bridge';
+    const NAME = 'Reuters';
     const URI = 'https://www.reuters.com';
     const CACHE_TIMEOUT = 3600; // 1h
     const DESCRIPTION = 'Returns news from Reuters';
@@ -94,6 +94,7 @@ class ReutersBridge extends BridgeAbstract
                     ],
                     'Technology' => [
                         'Technology' => 'tech',
+                        'Artificial Intelligence' => '/technology/artificial-intelligence',
                         'Disrupted' => '/technology/disrupted',
                         'Reuters Momentum' => '/technology/reuters-momentum',
                     ],
@@ -355,7 +356,7 @@ class ReutersBridge extends BridgeAbstract
                 return $base_url . 'articles-by-section-alias-or-id-v1?query=' . $json_query;
                 break;
         }
-        returnServerError('unsupported endpoint');
+        throwServerException('unsupported endpoint');
     }
 
     private function addStories($title, $content, $timestamp, $author, $url, $category)
@@ -534,17 +535,7 @@ class ReutersBridge extends BridgeAbstract
 EOD;
                             break;
                         case 'youtube':
-                            $url = "https://www.youtube.com/embed/$cid";
-                            $embed .= <<<EOD
-<‌iframe
-	width="560" 
-	height="315" 
-	src="{$url}"
-	frameborder="0" 
-	allowfullscreen
->
-</iframe>
-EOD;
+                            $embed .= handleYoutube($cid);
                             break;
                     }
                     $description .= $embed;

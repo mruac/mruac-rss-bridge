@@ -15,19 +15,15 @@ function render(string $template, array $context = []): string
             'level' => 'info',
         ];
     }
-    if (Debug::isEnabled()) {
-        $debugModeWhitelist = Configuration::getConfig('system', 'debug_mode_whitelist') ?: [];
-        if ($debugModeWhitelist === []) {
-            $context['messages'][] = [
-                'body' => 'Warning : Debug mode is active from any location, make sure only you can access RSS-Bridge.',
-                'level' => 'error'
-            ];
-        } else {
-            $context['messages'][] = [
-                'body' => 'Warning : Debug mode is active from your IP address, your requests will bypass the cache.',
-                'level' => 'warning'
-            ];
-        }
+    if (Configuration::getConfig('system', 'env') === 'dev') {
+        $context['messages'][] = [
+            'body' => 'System environment: dev',
+            'level' => 'error'
+        ];
+        $context['messages'][] = [
+            'body' => sprintf('Cache type: %s', Configuration::getConfig('cache', 'type')),
+            'level' => 'info'
+        ];
     }
     $context['page'] = render_template($template, $context);
     return render_template('base.html.php', $context);
@@ -84,6 +80,69 @@ function truncate(string $s, int $length = 150, $marker = '...'): string
         return $s;
     }
     return mb_substr($s, 0, $length) . $marker;
+}
+
+function html_input(array $attributes): string
+{
+    return html_tag('input', null, $attributes);
+}
+
+function html_option(string $name, $value, bool $selected = false): string
+{
+    return html_tag('option', $name, [
+        'value'     => $value,
+        'selected'  => $selected,
+    ]);
+}
+
+function html_tag(
+    string $name,
+    ?string $content = null,
+    array $attributes = []
+): string {
+    $strings = [
+        'type',
+        'id',
+        'name',
+        'value',
+        'placeholder',
+        'title',
+        'pattern',
+        'class',
+        'for',
+        'oncontextmenu',
+        'data-for',
+        'formtarget',
+    ];
+    $booleans = [
+        'checked',
+        'required',
+        'selected',
+    ];
+
+    $s = "<$name";
+
+    foreach ($attributes as $k => $v) {
+        if (in_array($k, $strings)) {
+            if ($v) {
+                $s .= sprintf(' %s="%s"', $k, e($v));
+            }
+        } elseif (in_array($k, $booleans)) {
+            if ($v === true) {
+                $s .= sprintf(' %s', $k);
+            }
+        } else {
+            throw new Exception(sprintf('Illegal html tag attribute: %s', $k));
+        }
+    }
+
+    if ($content) {
+        $s .= sprintf('>%s</%s>', e($content), $name);
+    } else {
+        $s .= ' />';
+    }
+
+    return $s;
 }
 
 /**
@@ -242,10 +301,9 @@ function defaultLinkTo($dom, $url)
  * ]
  *
  * @param string $srcset Content of srcset html attribute
- * @param bool $return_largest_url Instead of returning an array, return URL for the largest entry
- * @return array|string Content of srcset attribute as { size => url } array, or largest entry URL if requested
+ * @return array Content of srcset attribute as { size => url } array
  */
-function parseSrcset(string $srcset, bool $return_largest_url = false)
+function parseSrcset(string $srcset)
 {
     // The srcset format is more tricky to parse that it seems:
     //   URLs may contain commas, and space after comma is not mandatory, so the following is valid:
@@ -267,20 +325,28 @@ function parseSrcset(string $srcset, bool $return_largest_url = false)
             }
         }
     }
-    if ($return_largest_url) {
-        $largest_image_url = null;
-        $largest_image_size = -1;
-        foreach ($entries as $size => $url) {
-            $size_int = intval(substr($size, 0, strlen($size) - 1));
-            if ($size_int > $largest_image_size) {
-                $largest_image_size = $size_int;
-                $largest_image_url = $url;
-            }
+    return $entries;
+}
+
+/**
+ * Parse a srcset HTML attribute value and return the URL of the largest image
+ *
+ * @param string $srcset Content of srcset html attribute
+ * @return string Largest image URL
+ */
+function parseSrcsetLargestImageUrl(string $srcset)
+{
+    $largest_image_url = null;
+    $largest_image_size = -1;
+    $entries = parseSrcset($srcset);
+    foreach ($entries as $size => $url) {
+        $size_int = intval(substr($size, 0, strlen($size) - 1));
+        if ($size_int > $largest_image_size) {
+            $largest_image_size = $size_int;
+            $largest_image_url = $url;
         }
-        return $largest_image_url;
-    } else {
-        return $entries;
     }
+    return $largest_image_url;
 }
 
 /**
@@ -306,13 +372,13 @@ function convertLazyLoading($dom)
         if (!empty($img->getAttribute('data-src'))) {
             $img->src = $img->getAttribute('data-src');
         } elseif (!empty($img->getAttribute('data-srcset'))) {
-            $img->src = parseSrcset($img->getAttribute('data-srcset'));
+            $img->src = parseSrcsetLargestImageUrl($img->getAttribute('data-srcset'));
         } elseif (!empty($img->getAttribute('data-lazy-src'))) {
             $img->src = $img->getAttribute('data-lazy-src');
         } elseif (!empty($img->getAttribute('data-orig-file'))) {
             $img->src = $img->getAttribute('data-orig-file');
         } elseif (!empty($img->getAttribute('srcset'))) {
-            $img->src = parseSrcset($img->getAttribute('srcset'));
+            $img->src = parseSrcsetLargestImageUrl($img->getAttribute('srcset'));
         } else {
             continue; // Proceed to next element without removing attributes
         }
@@ -473,4 +539,62 @@ function markdownToHtml($string, $config = [])
         }
     }
     return $Parsedown->text($string);
+}
+
+/**
+ * Handle a YouTube video by either returning an iframe that embeds the video
+ * or by returning a clickable image (an <img> in a <a> tag).
+ * The system config can specify which to use, and whether to use youtube-nocookie.com over youtube.com.
+ *
+ * @param string $string A string containing a YouTube video URL or directly a video ID.
+ * @return string A HTML snippet either with an iframe or a clickable thumbnail. An empty string if no YouTube video ID is found.
+ */
+function handleYoutube(string $string)
+{
+    $useIframe = Configuration::getConfig('youtube', 'iframe');
+    $useNocookie = Configuration::getConfig('youtube', 'nocookie');
+
+    // sourced from https://gist.github.com/afeld/1254889?permalink_comment_id=3580082#gistcomment-3580082
+    $regex = '#(?:https?://|//)?(?:www\.|m\.|.+\.)?(?:youtu\.be/|youtube(?:-nocookie|)\.com/(?:embed/|v/|shorts/|feeds/api/videos/|watch\?v=|watch\?.+&v=))([\w-]{11})#i';
+    if (preg_match($regex, $string, $matches) === 1) {
+        $videoID = $matches[1];
+    } elseif (preg_match('#[\w-]{11}#i', $string, $matches2) === 1) {
+        $videoID = $matches2[0];
+    } else {
+        return '';
+    }
+
+    if ($useIframe) {
+        if ($useNocookie) {
+            $embedUri = 'https://www.youtube-nocookie.com/embed/' . $videoID;
+        } else {
+            $embedUri = 'https://www.youtube.com/embed/' . $videoID;
+        }
+        return render_template(__DIR__ . '/../templates/youtube-iframe.html.php', [
+            'url' => $embedUri,
+        ]);
+    } else {
+        $videoUri = 'https://www.youtube.com/watch?v=' . $videoID;
+
+        $thumbnailJpegBaseUri = 'https://i.ytimg.com/vi/' . $videoID;
+        $jpegSrcset = sprintf(
+            '%1$s/mqdefault.jpg 320w, %1$s/0.jpg 480w, %1$s/hqdefault.jpg 481w, %1$s/sddefault.jpg 640w, %1$s/hq720.jpg 720w, %1$s/maxresdefault.jpg 721w',
+            $thumbnailJpegBaseUri
+        );
+
+        $thumbnailWebpBaseUri = 'https://i.ytimg.com/vi_webp/' . $videoID;
+        $webpSrcset = sprintf(
+            '%1$s/mqdefault.webp 320w, %1$s/0.webp 480w, %1$s/hqdefault.webp 481w, %1$s/sddefault.webp 640w, %1$s/hq720.webp 720w, %1$s/maxresdefault.webp 721w',
+            $thumbnailWebpBaseUri
+        );
+
+        $fallbackUri = $thumbnailJpegBaseUri . '/maxresdefault.jpg';
+
+        return render_template(__DIR__ . '/../templates/youtube-picture.html.php', [
+            'videoUri'      => $videoUri,
+            'webpSrcset'    => $webpSrcset,
+            'jpegSrcset'    => $jpegSrcset,
+            'fallbackUri'   => $fallbackUri,
+        ]);
+    }
 }

@@ -196,7 +196,12 @@ class TwitterClient
                 throw $e;
             }
         }
-
+        if (! $userInfo) {
+            return (object) [
+                'user_info' => [],
+                'tweets' => [],
+            ];
+        }
         $timeline = $this->fetchTimeline($userInfo->rest_id);
         // try {
         //     // $timeline = $this->fetchTimelineUsingSearch($screenName);
@@ -287,10 +292,14 @@ class TwitterClient
             'https://twitter.com/i/api/graphql/hc-pka9A7gyS3xODIafnrQ/UserByScreenName?variables=%s',
             urlencode(json_encode($variables))
         );
-        $response = Json::decode(getContents($url, $this->createHttpHeaders()), false);
+        $json = getContents($url, $this->createHttpHeaders());
+        $response = Json::decode($json, false);
         if (isset($response->errors)) {
             // Grab the first error message
-            throw new \Exception(sprintf('From twitter api: "%s"', $response->errors[0]->message));
+            throwClientException(sprintf('From twitter api: "%s"', $response->errors[0]->message));
+        }
+        if (! isset($response->data->user)) {
+            return null;
         }
         $userInfo = $response->data->user;
         $this->data[$screenName] = $userInfo;
@@ -423,7 +432,7 @@ class TwitterClient
         $response = Json::decode(getContents($url, $this->createHttpHeaders()), false);
         if (isset($response->errors)) {
             // Grab the first error message
-            throw new \Exception(sprintf('From twitter api: "%s"', $response->errors[0]->message));
+            throwClientException(sprintf('From twitter api: "%s"', $response->errors[0]->message));
         }
         $listInfo = $response->data->user_by_screen_name->list;
         $this->data[$screenName . '-' . $listSlug] = $listInfo;

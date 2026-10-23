@@ -5,7 +5,7 @@ declare(strict_types=1);
 class TldrTechBridge extends BridgeAbstract
 {
     const MAINTAINER = 'sqrtminusone';
-    const NAME = 'TLDR Tech Newsletter Bridge';
+    const NAME = 'TLDR Tech Newsletter';
     const URI = 'https://tldr.tech/';
     const DESCRIPTION = 'Return newsletter articles from TLDR Tech';
 
@@ -22,7 +22,7 @@ class TldrTechBridge extends BridgeAbstract
                 'type' => 'list',
                 'values' => [
                     'Tech' => 'tech',
-                    'Web Dev' => 'webdev',
+                    'Dev' => 'dev',
                     'AI' => 'ai',
                     'Information Security' => 'infosec',
                     'Product Management' => 'product',
@@ -31,6 +31,10 @@ class TldrTechBridge extends BridgeAbstract
                     'Design' => 'design',
                     'Marketing' => 'marketing',
                     'Founders' => 'founders',
+                    'Fintech' => 'fintech',
+                    'Data' => 'data',
+                    'IT' => 'it',
+                    'Hardware' => 'hardware',
                 ],
                 'defaultValue' => 'tech'
             ]

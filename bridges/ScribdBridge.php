@@ -2,7 +2,7 @@
 
 class ScribdBridge extends BridgeAbstract
 {
-    const NAME = 'Scribd Bridge';
+    const NAME = 'Scribd';
     const URI = 'https://www.scribd.com';
     const DESCRIPTION = 'Returns documents uploaded by a user.';
     const MAINTAINER = 'VerifiedJoseph';
@@ -71,7 +71,7 @@ EOD;
     {
         if (!is_null($this->getInput('profile'))) {
             preg_match($this->profileUrlRegex, $this->getInput('profile'), $user)
-                or returnServerError('Could not extract user ID and name from given profile URL.');
+                or throwServerException('Could not extract user ID and name from given profile URL.');
 
             return self::URI . '/' . $user[1] . '/uploads';
         }

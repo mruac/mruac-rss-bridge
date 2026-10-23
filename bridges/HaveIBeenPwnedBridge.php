@@ -9,7 +9,7 @@
  * */
 class HaveIBeenPwnedBridge extends BridgeAbstract
 {
-    const NAME = 'Have I Been Pwned (HIBP) Bridge';
+    const NAME = 'Have I Been Pwned (HIBP)';
     const URI = 'https://haveibeenpwned.com';
     const DESCRIPTION = 'Returns list of Pwned websites';
     const MAINTAINER = 'VerifiedJoseph';
@@ -48,7 +48,7 @@ class HaveIBeenPwnedBridge extends BridgeAbstract
                            . $pwnCount . ' breached accounts';
             $item['dateAdded'] = $breach['AddedDate'];
             $item['breachDate'] = $breach['BreachDate'];
-            $item['uri'] = self::URI . '/PwnedWebsites#' . $breach['Name'];
+            $item['uri'] = self::URI . '/breach/' . $breach['Name'];
 
             $item['content'] = '<p>' . $breach['Description'] . '</p>';
             $item['content'] .= '<p>' . $this->breachType($breach) . '</p>';

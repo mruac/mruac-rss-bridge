@@ -2,7 +2,7 @@
 
 class CeskaTelevizeBridge extends BridgeAbstract
 {
-    const NAME = 'Česká televize Bridge';
+    const NAME = 'Česká televize';
     const URI = 'https://www.ceskatelevize.cz';
     const CACHE_TIMEOUT = 3600;
     const DESCRIPTION = 'Return newest videos';
@@ -24,7 +24,7 @@ class CeskaTelevizeBridge extends BridgeAbstract
 
         $validUrl = '/^(https:\/\/www\.ceskatelevize\.cz\/porady\/\d+-[a-z0-9-]+\/)(bonus\/)?$/';
         if (!preg_match($validUrl, $url, $match)) {
-            returnServerError('Invalid url');
+            throwServerException('Invalid url');
         }
 
         $category = $match[4] ?? 'nove';
@@ -63,7 +63,7 @@ class CeskaTelevizeBridge extends BridgeAbstract
         } elseif (strpos($string, 'včera') !== false) {
             return strtotime('yesterday');
         } elseif (!preg_match('/(\d+).(\d+).((\d+))?/', $string, $match)) {
-            returnServerError('Could not get date from Česká televize string');
+            throwServerException('Could not get date from Česká televize string');
         }
 
         $date = sprintf('%04d-%02d-%02d', $match[3] ?? date('Y'), $match[2], $match[1]);

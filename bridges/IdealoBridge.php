@@ -2,7 +2,7 @@
 
 class IdealoBridge extends BridgeAbstract
 {
-    const NAME = 'idealo.de / idealo.fr / idealo.es Bridge';
+    const NAME = 'idealo.de / idealo.fr / idealo.es';
     const URI = 'https://www.idealo.de';
     const DESCRIPTION = 'Tracks the price for a product on idealo.de / idealo.fr / idealo.es. Pricealarm if specific price is set';
     const MAINTAINER = 'SebLaus';
@@ -41,6 +41,7 @@ class IdealoBridge extends BridgeAbstract
         'Accept-Language: fr-FR,fr;q=0.8,en-US;q=0.5,en;q=0.3'
     ];
     private $options = [
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_TRANSFER_ENCODING => 1,
         CURLOPT_ACCEPT_ENCODING => 'gzip, deflate, br'
     ];

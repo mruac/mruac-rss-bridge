@@ -3,7 +3,7 @@
 class WiredBridge extends FeedExpander
 {
     const MAINTAINER = 'ORelio';
-    const NAME = 'WIRED Bridge';
+    const NAME = 'WIRED';
     const URI = 'https://www.wired.com/';
     const DESCRIPTION = 'Returns the newest articles from WIRED';
 
@@ -32,7 +32,7 @@ class WiredBridge extends FeedExpander
     {
         $feed = $this->getInput('feed');
         if (empty($feed) || !ctype_alpha(str_replace('-', '', $feed))) {
-            returnClientError('Invalid feed, please check the "feed" parameter.');
+            throwClientException('Invalid feed, please check the "feed" parameter.');
         }
 
         $feed_url = $this->getURI() . 'feed/';

@@ -7,7 +7,7 @@
  */
 class IvooxBridge extends BridgeAbstract
 {
-    const NAME = 'Ivoox Bridge';
+    const NAME = 'Ivoox';
     const URI = 'https://www.ivoox.com/';
     const CACHE_TIMEOUT = 10800; // 3h
     const DESCRIPTION = 'Returns the 10 newest episodes by keyword search';
@@ -110,7 +110,7 @@ class IvooxBridge extends BridgeAbstract
             $this->request = str_replace(' ', '-', $this->getInput('s'));
             $url_feed = self::URI . urlencode($this->request) . '_sb_f_1.html?o=uploaddate';
         } else {
-            returnClientError('Not valid mode at IvooxBridge');
+            throwClientException('Not valid mode at IvooxBridge');
         }
 
         $dom = getSimpleHTMLDOM($url_feed);

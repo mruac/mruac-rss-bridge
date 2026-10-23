@@ -3,7 +3,7 @@
 class AllocineFRBridge extends BridgeAbstract
 {
     const MAINTAINER = 'superbaillot.net';
-    const NAME = 'Allo Cine Bridge';
+    const NAME = 'Allo Cine';
     const CACHE_TIMEOUT = 25200; // 7h
     const URI = 'https://www.allocine.fr';
     const DESCRIPTION = 'Bridge for allocine.fr';
@@ -57,7 +57,7 @@ class AllocineFRBridge extends BridgeAbstract
             if (array_key_exists($category, $categories)) {
                 return static::URI . $this->getLastSeasonURI($categories[$category]);
             } else {
-                returnClientError('Emission inconnue');
+                throwClientException('Emission inconnue');
             }
         }
 

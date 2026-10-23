@@ -173,9 +173,7 @@ class Drive2ruBridge extends BridgeAbstract
             $node->outertext = '';
         }
         foreach ($content->find('iframe') as $node) {
-            preg_match('/embed\/(.*?)\?/', $node->src, $match);
-            $node->outertext = '<a href="https://www.youtube.com/watch?v=' . $match[1] .
-                '">https://www.youtube.com/watch?v=' . $match[1] . '</a>';
+            $node->outertext = handleYoutube($node->src);
         }
         return $content;
     }
@@ -204,13 +202,13 @@ class Drive2ruBridge extends BridgeAbstract
                 break;
             case 'Бортжурналы (По модели или марке)':
                 if (!preg_match('/^https:\/\/www.drive2.ru\/experience/', $this->getInput('url'))) {
-                    returnServerError('Invalid url');
+                    throwServerException('Invalid url');
                 }
                 $this->getLogbooksContent($this->getInput('url'));
                 break;
             case 'Личные блоги':
                 if (!preg_match('/^[a-zA-Z0-9-]{3,16}$/', $this->getInput('username'))) {
-                    returnServerError('Invalid username');
+                    throwServerException('Invalid username');
                 }
                 $this->getUserContent('https://www.drive2.ru/users/' . $this->getInput('username'));
                 break;

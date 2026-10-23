@@ -2,7 +2,7 @@
 
 class PatreonBridge extends BridgeAbstract
 {
-    const NAME = 'Patreon Bridge';
+    const NAME = 'Patreon';
     const URI = 'https://www.patreon.com/';
     const CACHE_TIMEOUT = 300; // 5min
     const DESCRIPTION = 'Returns posts by creators on Patreon';
@@ -25,7 +25,7 @@ class PatreonBridge extends BridgeAbstract
         if (preg_match($regex, $html->save(), $matches) > 0) {
             $campaign_id = $matches[1];
         } else {
-            returnServerError('Could not find campaign ID');
+            throwServerException('Could not find campaign ID');
         }
 
         $query = [

@@ -2,7 +2,7 @@
 
 class VimeoBridge extends BridgeAbstract
 {
-    const NAME = 'Vimeo Bridge';
+    const NAME = 'Vimeo';
     const URI = 'https://vimeo.com/';
     const DESCRIPTION = 'Returns search results from Vimeo';
     const MAINTAINER = 'logmanoriginal';
@@ -81,7 +81,7 @@ class VimeoBridge extends BridgeAbstract
         }
 
         if (is_null($json)) {
-            returnClientError('No results for this query!');
+            throwClientException('No results for this query!');
         }
 
         foreach ($json->api->initial_json->data as $element) {
@@ -103,7 +103,7 @@ class VimeoBridge extends BridgeAbstract
                     break;
 
                 default:
-                    returnServerError('Unknown type: ' . $element->type);
+                    throwServerException('Unknown type: ' . $element->type);
             }
         }
     }

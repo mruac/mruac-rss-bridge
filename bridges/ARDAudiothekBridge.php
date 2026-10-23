@@ -2,7 +2,7 @@
 
 class ARDAudiothekBridge extends BridgeAbstract
 {
-    const NAME = 'ARD-Audiothek Bridge';
+    const NAME = 'ARD-Audiothek';
     const URI = 'https://www.ardaudiothek.de';
     const DESCRIPTION = 'Feed of any show in the ARD-Audiothek, specified by its path';
     const MAINTAINER = 'Mar-Koeh';
@@ -71,7 +71,7 @@ class ARDAudiothekBridge extends BridgeAbstract
 
         $pathComponents = explode('/', $path);
         if (empty($pathComponents)) {
-            returnClientError('Path may not be empty');
+            throwClientException('Path may not be empty');
         }
         if (count($pathComponents) < 2) {
             $showID = $pathComponents[0];

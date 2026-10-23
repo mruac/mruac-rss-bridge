@@ -2,7 +2,7 @@
 
 class TwitterBridge extends BridgeAbstract
 {
-    const NAME = 'Twitter Bridge';
+    const NAME = 'Twitter';
     const URI = 'https://twitter.com/';
     const API_URI = 'https://api.twitter.com';
     const GUEST_TOKEN_USES = 100;
@@ -289,19 +289,19 @@ EOD
                 $data = $api->fetchListTweets($query, $this->queriedContext);
                 break;
             default:
-                returnServerError('Invalid query context !');
+                throwServerException('Invalid query context !');
         }
 
         if (!$data) {
             switch ($this->queriedContext) {
                 case 'By keyword or hashtag':
-                    returnServerError('twitter: No results for this query.');
+                    throwServerException('twitter: No results for this query.');
                     // fall-through
                 case 'By username':
-                    returnServerError('Requested username can\'t be found.');
+                    throwServerException('Requested username can\'t be found.');
                     // fall-through
                 case 'By list':
-                    returnServerError('Requested username or list can\'t be found');
+                    throwServerException('Requested username or list can\'t be found');
             }
         }
 

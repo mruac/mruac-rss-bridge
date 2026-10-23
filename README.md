@@ -46,7 +46,7 @@ Requires minimum PHP 7.4.
 * `TwitchBridge`: [Fetches videos from channel](https://rss-bridge.org/bridge01/#bridge-TwitchBridge)
 * `XPathBridge`: [Scrape out a feed using XPath expressions](https://rss-bridge.org/bridge01/#bridge-XPathBridge)
 * `YoutubeBridge`: [Fetches videos by username/channel/playlist/search](https://rss-bridge.org/bridge01/#bridge-YoutubeBridge)
-* `YouTubeCommunityTabBridge`: [Fetches posts from a channel's community tab](https://rss-bridge.org/bridge01/#bridge-YouTubeCommunityTabBridge)
+* `YouTubeCommunityTabBridge`: [Fetches posts from a channel's Posts tab](https://rss-bridge.org/bridge01/#bridge-YouTubeCommunityTabBridge)
 
 ## Tutorial
 
@@ -187,7 +187,36 @@ composer create-project -v --no-dev --no-scripts rss-bridge/rss-bridge
 
 ### How to install with Caddy
 
-TODO. See https://github.com/RSS-Bridge/rss-bridge/issues/3785
+Follow the Debian installation steps above, but install and configure Caddy instead of nginx.
+
+Use the same PHP-FPM pool configuration shown above, then create the following Caddy configuration:
+
+```caddyfile
+# /etc/caddy/Caddyfile
+
+example.com {
+    root * /var/www/rss-bridge
+
+    handle /static/* {
+        file_server
+    }
+
+    handle / {
+        php_fastcgi unix//run/php/rss-bridge.sock
+    }
+
+    handle {
+        respond 404
+    }
+}
+```
+
+Validate the configuration, then restart both services:
+
+```bash
+php-fpm8.2 -t && systemctl restart php8.2-fpm
+caddy validate --config /etc/caddy/Caddyfile && systemctl restart caddy
+```
 
 ### Install from Docker Hub:
 
@@ -254,6 +283,8 @@ Browse http://localhost:3000/
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 [![Deploy to Cloudron](https://cloudron.io/img/button.svg)](https://www.cloudron.io/store/com.rssbridgeapp.cloudronapp.html)
 [![Run on PikaPods](https://www.pikapods.com/static/run-button.svg)](https://www.pikapods.com/pods?run=rssbridge)
+[![Deploy to ZopDay](https://zop.dev/deploytozopday-inkhard.svg)](https://zop.dev/zopday/app/deploy?image=rssbridge/rss-bridge:latest&port=80&name=rss-bridge&utm_source=github&utm_medium=one_click&utm_content=rss-bridge)
+[![Deploy on Pethost](https://pethost.dev/button.svg)](https://pethost.dev/templates/rss-bridge/)
 
 The Heroku quick deploy currently does not work. It might work if you fork this repo and
 modify the `repository` in `scalingo.json`. See https://github.com/RSS-Bridge/rss-bridge/issues/2688
@@ -321,12 +352,22 @@ The sqlite files (db, wal and shm) are not writeable.
 
     rm cache/*
 
-### How to create a new bridge from scratch
+### How to create a completely new bridge
+
+New code files MUST have `declare(strict_types=1);` at the top of file:
+
+```php
+<?php
+
+declare(strict_types=1);
+```
 
 Create the new bridge in e.g. `bridges/BearBlogBridge.php`:
 
 ```php
 <?php
+
+declare(strict_types=1);
 
 class BearBlogBridge extends BridgeAbstract
 {
@@ -358,14 +399,6 @@ Learn more in [bridge api](https://rss-bridge.github.io/rss-bridge/Bridge_API/in
 enabled_bridges[] = TwitchBridge
 enabled_bridges[] = GettrBridge
 ```
-
-### How to enable debug mode
-
-The 
-[debug mode](https://rss-bridge.github.io/rss-bridge/For_Developers/Debug_mode.html)
-disables the majority of caching operations.
-
-    enable_debug_mode = true
 
 ### How to switch to memcached as cache backend
 
@@ -440,13 +473,14 @@ Run linter:
 
     ./vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0 --extensions=php -p ./
 
-https://github.com/squizlabs/PHP_CodeSniffer/wiki
+https://github.com/PHPCSStandards/PHP_CodeSniffer/wiki
 
 ### How to spawn a minimal development environment
 
     php -S 127.0.0.1:9001
 
 http://127.0.0.1:9001/
+
 
 ## Explanation
 

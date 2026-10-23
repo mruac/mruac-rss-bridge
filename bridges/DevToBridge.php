@@ -5,7 +5,7 @@ class DevToBridge extends BridgeAbstract
     const CONTEXT_BY_TAG = 'By tag';
     const CONTEXT_BY_USER = 'By user';
 
-    const NAME = 'dev.to Bridge';
+    const NAME = 'dev.to';
     const URI = 'https://dev.to';
     const DESCRIPTION = 'Returns feeds for tags';
     const MAINTAINER = 'logmanoriginal';
@@ -75,7 +75,7 @@ apple-icon-5c6fa9f2bce280428589c6195b7f1924206a53b782b371cfe2d02da932c8c173.png'
         $html = defaultLinkTo($html, static::URI);
 
         $articles = $html->find('div.crayons-story')
-            or returnServerError('Could not find articles!');
+            or throwServerException('Could not find articles!');
 
         foreach ($articles as $article) {
             $item = [];

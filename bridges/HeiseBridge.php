@@ -3,7 +3,7 @@
 class HeiseBridge extends FeedExpander
 {
     const MAINTAINER = 'Dreckiger-Dan';
-    const NAME = 'Heise Online Bridge';
+    const NAME = 'Heise Online';
     const URI = 'https://heise.de/';
     const CACHE_TIMEOUT = 1800; // 30min
     const DESCRIPTION = 'Returns the full articles instead of only the intro';
@@ -29,6 +29,11 @@ class HeiseBridge extends FeedExpander
                 => 'https://www.heise.de/rss/heise-Rubrik-Wirtschaft-atom.xml',
                 'heise online Journal'
                 => 'https://www.heise.de/rss/heise-Rubrik-Journal-atom.xml',
+                // → https://www.heise.de/thema
+                'heise online > Thema > Open Source'
+                => 'https://www.heise.de/thema/Open-Source.xml',
+                'heise online > Thema > Raumfahrt'
+                => 'https://www.heise.de/thema/Raumfahrt.xml',
                 'heise online Top-News'
                 => 'https://www.heise.de/rss/heise-top-atom.xml',
                 //'iMonitor – Internet-Störungen'
@@ -136,8 +141,20 @@ class HeiseBridge extends FeedExpander
         if (strpos($item['uri'], 'https://www.heise.de') !== 0) {
             return $item;
         }
+
+        // These cause memory leaks in simple_html_dom
+        $skipped = [
+            'https://www.heise.de/bestenlisten/testsieger/top-10-der-beste-mini-pc-mit-windows-11-im-test-amd-ryzen-dominiert/6cybv8w',
+            'https://www.heise.de/bestenlisten/testsieger/top-10-der-beste-maehroboter-ohne-begrenzungskabel-mit-kamera-gps-oder-lidar/gb7xhbg',
+        ];
+        if (in_array($item['uri'], $skipped)) {
+            $this->logger->debug(sprintf('skip: %s', $item['uri']));
+            return $item;
+        }
+
         // abort on heise+ articles
         if ($sessioncookie == '' && str_starts_with($item['title'], 'heise+ |')) {
+            $item['uri'] = 'https://archive.is/' . $item['uri'];
             return $item;
         }
 
@@ -151,6 +168,11 @@ class HeiseBridge extends FeedExpander
             $item = $this->addArticleToItem($item, $article);
         }
 
+        $article->clear();
+
+        // Manually trigger gc to reduce memory usage
+        gc_collect_cycles();
+
         return $item;
     }
 
@@ -161,8 +183,8 @@ class HeiseBridge extends FeedExpander
 
         // remove unwanted stuff
         foreach (
-            $article->find('figure.branding, figure.a-inline-image, a-ad, div.ho-text, a-img,
-            .a-toc__list, a-collapse, .opt-in__description, .opt-in__footnote') as $element
+            $article->find('figure.branding, figure.a-inline-image, a-ad, div.ho-text, a-img, .opt-in__title,
+            .a-toc__list, a-collapse, .opt-in__description, .opt-in__footnote, .opt-in__bg-image, .notice-banner__text, .notice-banner__link, .ad, .ad--inread') as $element
         ) {
             $element->remove();
         }
@@ -190,25 +212,44 @@ class HeiseBridge extends FeedExpander
         //fix for embbedded youtube-videos
         $oldlink = '';
         foreach ($article->find('div.video__yt-container') as &$ytvideo) {
-            if (preg_match('/www.youtube.*?\"/', $ytvideo->innertext, $link) && $link[0] != $oldlink) {
-                //save link to prevent duplicates
-                $oldlink = $link[0];
-                $ytiframe = <<<EOT
-                    <iframe width="560" height="315" src="https://$link[0] title="YouTube video player" frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                EOT;
-                //check if video is in header or article for correct possitioning
-                if (strpos($header->innertext, $link[0])) {
-                    $item['content'] .= $ytiframe;
+            $ytResult = handleYoutube($ytvideo->innertext);
+            if ($ytResult) {
+                //check if video is in header or article for correct positioning
+                if (strpos($header->innertext, $ytvideo)) {
+                    $item['content'] .= $ytResult;
                 } else {
-                    $ytvideo->innertext .= $ytiframe;
+                    $ytvideo->innertext .= $ytResult;
                     $reloadneeded = 1;
                 }
             }
         }
+
+        // strip p tags inside of figcaption to avoid doubling it
+        foreach ($article->find('figcaption p') as $key => $elem) {
+            $elem->outertext = $elem->plaintext;
+            $reloadneeded = 1;
+        }
+
         if (isset($reloadneeded)) {
             $article = str_get_html($article->outertext);
+        }
+
+        // fix mastodon embeds
+        foreach ($article->find('embetty-mastodon') as &$post) {
+            $url = $post->status;
+            $parsedUrl = parse_url($url);
+            $baseUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
+            if (isset($parsedUrl['port'])) {
+                $baseUrl .= ':' . $pasedurl['port'];
+            }
+            $post->innertext = <<<EOD
+<blockquote class='mastodon-embed' data-embed-url='$url/embed'
+    style='background: #FCF8FF; border-radius: 8px; border: 1px solid #C9C4DA;
+    margin: 0; max-width: 540px; min-width: 270px; overflow: hidden; padding: 0;'>
+<a href='$url' target='_blank'>Embedded Mastodon post: $url</a>
+</blockquote>
+<script data-allowed-prefixes='$baseUrl' async src='$baseUrl/embed.js'></script>
+EOD;
         }
 
         $categories = $article->find('.article-footer__topics ul.topics li.topics__item a-topic a');
@@ -219,7 +260,8 @@ class HeiseBridge extends FeedExpander
         $content = $article->find('.article-content', 0);
         if ($content) {
             $contentElements = $content->find(
-                'p, h3, ul, ol, table, pre, noscript img, a-bilderstrecke h2, a-bilderstrecke figure, a-bilderstrecke figcaption, noscript iframe'
+                // phpcs:ignore
+                'p, h3, ul, ol, table, pre, noscript img, noscript iframe, a-bilderstrecke h2, a-bilderstrecke figure, a-bilderstrecke figcaption, figure figcaption.a-caption div.text, div.update-box__datetime'
             );
             $item['content'] .= implode('', $contentElements);
         }

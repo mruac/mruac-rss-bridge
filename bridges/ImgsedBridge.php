@@ -3,7 +3,7 @@
 class ImgsedBridge extends BridgeAbstract
 {
     const MAINTAINER = 'sysadminstory';
-    const NAME = 'Imgsed Bridge';
+    const NAME = 'Imgsed';
     const URI = 'https://imgsed.com/';
     const INSTAGRAMURI = 'https://www.instagram.com/';
     const CACHE_TIMEOUT = 3600; // 1h
@@ -59,7 +59,7 @@ class ImgsedBridge extends BridgeAbstract
                 $this->collectTaggeds();
             }
         } catch (HttpException $e) {
-            throw new \Exception(sprintf('Unable to find user `%s`', $username));
+            throwClientException(sprintf('Unable to find user `%s`', $username));
         }
     }
 
@@ -258,7 +258,7 @@ HTML,
 
             // If no content type is selected, this bridge does nothing, so we return an error
             if (count($types) == 0) {
-                returnClientError('You must select at least one of the content type : Post, Stories or Tags !');
+                throwClientException('You must select at least one of the content type : Post, Stories or Tags !');
             }
             $typesText = $types[0] ?? '';
 
@@ -269,7 +269,7 @@ HTML,
                 $typesText .= ' & ' . $types[$i];
             }
 
-            return 'Username ' . $this->getInput('u') . ' - ' . $typesText . ' - Imgsed Bridge';
+            return 'Username ' . $this->getInput('u') . ' - ' . $typesText . ' - Imgsed';
         }
         return parent::getName();
     }

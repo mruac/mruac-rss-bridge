@@ -2,7 +2,7 @@
 
 class AppleAppStoreBridge extends BridgeAbstract
 {
-    const MAINTAINER = 'captn3m0';
+    const MAINTAINER = 'NohamR';
     const NAME = 'Apple App Store';
     const URI = 'https://apps.apple.com/';
     const CACHE_TIMEOUT = 3600; // 1h
@@ -14,20 +14,28 @@ class AppleAppStoreBridge extends BridgeAbstract
             'required'  => true,
             'exampleValue'  => '310633997'
         ],
+        // 'p' => [
+        //     'name'  => 'Platform',
+        //     'type'  => 'list',
+        //     'values'    => [
+        //         'iPad'  => 'ipad',
+        //         'iPhone'    => 'iphone',
+        //         'Mac'   => 'mac',
+        //         'Web'   => 'web',
+        //         'Apple TV'  => 'appletv',
+        //     ],
+        //     'defaultValue'  => 'mac',
+        // ],
+        # The platform parameter is currently not used in the URL construction,
+        # but it may be useful for future enhancements or for filtering version
+        # history based on platform-specific releases.
         'p' => [
             'name'  => 'Platform',
             'type'  => 'list',
             'values'    => [
-                'iPad'  => 'ipad',
-                'iPhone'    => 'iphone',
                 'Mac'   => 'mac',
-
-                // The following 2 are present in responses
-                // but not yet tested
-                'Web'   => 'web',
-                'Apple TV'  => 'appletv',
             ],
-            'defaultValue'  => 'iphone',
+            'defaultValue'  => 'mac',
         ],
         'country'   => [
             'name'  => 'Store Country',
@@ -59,35 +67,46 @@ class AppleAppStoreBridge extends BridgeAbstract
         ]
     ]];
 
-    const PLATFORM_MAPPING = [
-        'iphone' => 'ios',
-        'ipad' => 'ios',
-        'mac' => 'osx'
-    ];
-
     private $name;
 
     private function makeHtmlUrl()
     {
         $id = $this->getInput('id');
-        $country = $this->getInput('country');
+        $country = strtolower($this->getInput('country'));
         return sprintf('https://apps.apple.com/%s/app/id%s', $country, $id);
     }
 
-    private function makeJsonUrl()
+    // Apple answers /{country}/app/id{id} with a 301 to the slugged URL,
+    // which getContents() does not follow. The lookup API returns that URL.
+    private function resolveHtmlUrl()
     {
         $id = $this->getInput('id');
-        $country = $this->getInput('country');
-        $platform = $this->getInput('p');
+        $country = strtolower($this->getInput('country'));
+        $lookupUrl = sprintf('https://itunes.apple.com/lookup?id=%s&country=%s', urlencode($id), urlencode($country));
 
-        $platform_param = ($platform === 'mac') ? 'mac' : $platform;
+        try {
+            $json = Json::decode(getContents($lookupUrl));
+            $url = $json['results'][0]['trackViewUrl'] ?? null;
+            if ($url) {
+                $this->debugLog(sprintf('Resolved canonical URL via lookup API: %s', $url));
+                return $url;
+            }
+        } catch (\Exception $e) {
+            $this->debugLog(sprintf('Lookup API failed: %s', $e->getMessage()));
+        }
 
-        return sprintf(
-            'https://amp-api-edge.apps.apple.com/v1/catalog/%s/apps/%s?platform=%s&extend=versionHistory',
-            $country,
-            $id,
-            $platform_param
-        );
+        return $this->makeHtmlUrl();
+    }
+
+    private function getHtmlRequestHeaders()
+    {
+        return [
+            'accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'cache-control: no-cache',
+            'pragma: no-cache',
+            'upgrade-insecure-requests: 1',
+            'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
+        ];
     }
 
     public function getName()
@@ -106,72 +125,56 @@ class AppleAppStoreBridge extends BridgeAbstract
         }
     }
 
-    private function getHtml()
-    {
-        $url = $this->makeHtmlUrl();
-        $this->debugLog(sprintf('Fetching HTML from: %s', $url));
-
-        return getSimpleHTMLDOM($url);
-    }
-
-    private function getJWTToken()
-    {
-        $html = $this->getHtml();
-        $meta = $html->find('meta[name="web-experience-app/config/environment"]', 0);
-
-        if (!$meta || !isset($meta->content)) {
-            throw new \Exception('JWT token not found in page content');
-        }
-
-        $decoded_content = urldecode($meta->content);
-        $this->debugLog('Found meta tag content');
-
-        try {
-            $decoded_json = Json::decode($decoded_content);
-        } catch (\Exception $e) {
-            throw new \Exception(sprintf('Failed to parse JSON from meta tag: %s', $e->getMessage()));
-        }
-
-        if (!isset($decoded_json['MEDIA_API']['token'])) {
-            throw new \Exception('Token field not found in JSON structure');
-        }
-
-        $token = $decoded_json['MEDIA_API']['token'];
-        $this->debugLog('Successfully extracted JWT token');
-        return $token;
-    }
-
     private function getAppData()
     {
-        $token = $this->getJWTToken();
+        $url = $this->resolveHtmlUrl();
+        $this->debugLog(sprintf('Fetching HTML page for serialized data extraction: %s', $url));
+        $content = getContents($url, $this->getHtmlRequestHeaders());
 
-        $url = $this->makeJsonUrl();
-        $this->debugLog(sprintf('Fetching data from API: %s', $url));
+        $startTag = '<script type="application/json" id="serialized-server-data">';
+        $startPos = strpos($content, $startTag);
+        if ($startPos === false) {
+            throw new \Exception('Failed to locate serialized server data in HTML page');
+        }
 
-        $headers = [
-            'Authorization: Bearer ' . $token,
-            'Origin: https://apps.apple.com',
-            'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        ];
+        $jsonStart = $startPos + strlen($startTag);
+        $endPos = strpos($content, '</script>', $jsonStart);
+        if ($endPos === false) {
+            throw new \Exception('Failed to locate end of serialized server data');
+        }
 
-        $content = getContents($url, $headers);
+        $serializedServerData = html_entity_decode(substr($content, $jsonStart, $endPos - $jsonStart), ENT_QUOTES | ENT_HTML5);
 
         try {
-            $json = Json::decode($content);
+            $json = Json::decode($serializedServerData);
         } catch (\Exception $e) {
-            throw new \Exception(sprintf('Failed to parse API response: %s', $e->getMessage()));
+            throw new \Exception(sprintf('Failed to parse serialized server data: %s', $e->getMessage()));
         }
 
         if (!isset($json['data']) || empty($json['data'])) {
-            throw new \Exception('No app data found in API response');
+            throw new \Exception('No app data found in serialized server data');
         }
 
-        $this->debugLog('Successfully retrieved app data from API');
-        return $json['data'][0];
+        $this->debugLog('Successfully retrieved app data from HTML page');
+        return $json['data'][0]['data'] ?? $json['data'][0];
     }
 
     private function extractAppDetails($data)
     {
+        if (isset($data['lockup'])) {
+            $this->name = $data['lockup']['title'] ?? null;
+            $author = $data['developerAction']['title'] ?? ($data['lockup']['developerTagline'] ?? null);
+            $this->debugLog(sprintf('Found app details in lockup: %s by %s', $this->name, $author));
+            return [$this->name, $author];
+        }
+
+        if (isset($data['title'])) {
+            $this->name = $data['title'];
+            $author = $data['developerAction']['title'] ?? ($data['lockup']['developerTagline'] ?? null);
+            $this->debugLog(sprintf('Found app details in title: %s by %s', $this->name, $author));
+            return [$this->name, $author];
+        }
+
         if (isset($data['attributes'])) {
             $this->name = $data['attributes']['name'] ?? null;
             $author = $data['attributes']['artistName'] ?? null;
@@ -187,16 +190,29 @@ class AppleAppStoreBridge extends BridgeAbstract
 
     private function getVersionHistory($data)
     {
-        $platform = $this->getInput('p');
-        $this->debugLog(sprintf('Extracting version history for platform: %s', $platform));
+        $this->debugLog('Extracting version history from serialized server data');
 
-        // Get the mapped platform key (ios for iPhone/iPad, osx for Mac)
-        $platform_key = self::PLATFORM_MAPPING[$platform] ?? $platform;
+        $version_history = [];
 
-        $version_history = $data['attributes']['platformAttributes'][$platform_key]['versionHistory'] ?? [];
+        $pageData = $data['shelfMapping']['mostRecentVersion']['seeAllAction']['pageData'] ?? [];
+        $shelves = $pageData['shelves'] ?? [];
+
+        foreach ($shelves as $shelf) {
+            foreach (($shelf['items'] ?? []) as $entry) {
+                if (($entry['$kind'] ?? null) !== 'TitledParagraph') {
+                    continue;
+                }
+
+                $version_history[] = [
+                    'versionDisplay' => $entry['primarySubtitle'] ?? 'Unknown Version',
+                    'releaseNotes' => $entry['text'] ?? 'No release notes available',
+                    'releaseDate' => $entry['secondarySubtitle'] ?? null,
+                ];
+            }
+        }
 
         if (empty($version_history)) {
-            $this->debugLog(sprintf('No version history found for %s', $platform));
+            $this->debugLog('No version history found');
         }
 
         return $version_history;
@@ -204,7 +220,7 @@ class AppleAppStoreBridge extends BridgeAbstract
 
     public function collectData()
     {
-        $this->debugLog(sprintf('Getting data for %s app', $this->getInput('p')));
+        $this->debugLog('Getting app data');
         $data = $this->getAppData();
 
         // Get app name and author using array destructuring
@@ -222,9 +238,9 @@ class AppleAppStoreBridge extends BridgeAbstract
             $item = [];
             $item['title'] = sprintf('%s - %s', $name, $version);
             $item['content'] = nl2br($release_notes) ?: 'No release notes available';
-            $item['timestamp'] = $release_date;
+            $item['timestamp'] = strtotime($release_date) ?: $release_date;
             $item['author'] = $author;
-            $item['uri'] = $this->makeHtmlUrl();
+            $item['uri'] = $data['canonicalURL'] ?? $this->makeHtmlUrl();
 
             $this->items[] = $item;
         }

@@ -3,7 +3,7 @@
 class EuronewsBridge extends BridgeAbstract
 {
     const MAINTAINER = 'sqrtminusone';
-    const NAME = 'Euronews Bridge';
+    const NAME = 'Euronews';
     const URI = 'https://www.euronews.com/';
     const CACHE_TIMEOUT = 600; // 10 minutes
     const DESCRIPTION = 'Return articles from the "Just In" feed of Euronews.';
@@ -102,7 +102,13 @@ class EuronewsBridge extends BridgeAbstract
             foreach ($json['@graph'] as $item) {
                 if ($item['@type'] == 'NewsArticle') {
                     if (array_key_exists('author', $item)) {
-                        $author = $item['author']['name'];
+                        if (is_array($item['author'])) {
+                            $author = implode(', ', array_map(function ($e) {
+                                return $e['name'];
+                            }, $item['author']));
+                        } elseif (array_key_exists('name', $item['author'])) {
+                            $author = $item['author']['name'];
+                        }
                     }
                     if (array_key_exists('image', $item)) {
                         $content .= '<figure>';
@@ -201,8 +207,7 @@ class EuronewsBridge extends BridgeAbstract
             $player_div = $html->find('.js-player-pfp', 0);
             if ($player_div) {
                 $video_id = $player_div->getAttribute('data-video-id');
-                $video_url = 'https://www.youtube.com/watch?v=' . $video_id;
-                $content .= '<a href="' . $video_url . '">' . $video_url . '</a>';
+                $content .= handleYoutube($video_id);
             }
         }
 
